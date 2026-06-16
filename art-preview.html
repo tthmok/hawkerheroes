@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hawker Heroes Cute Art Preview</title>
+  <style>
+    :root {
+      color: #2a2018;
+      background: #f7efe2;
+      font-family: Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 18px;
+      font-size: 24px;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 26px 0 12px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+      gap: 12px;
+    }
+
+    .tile {
+      border: 2px solid #3A2A1A;
+      border-radius: 8px;
+      background: #fffaf0;
+      padding: 10px;
+    }
+
+    .label {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .swatches {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      min-height: 275px;
+    }
+
+    .sample {
+      display: grid;
+      gap: 5px;
+      justify-items: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    canvas {
+      display: block;
+      border: 1px solid rgba(58, 42, 26, 0.34);
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Hawker Heroes Cute Art Preview</h1>
+  <main id="preview"></main>
+
+  <script src="src/art/cute.js"></script>
+  <script>
+    (function () {
+      var keys = [
+        'tony',
+        'terrance',
+        'student_0',
+        'student_1',
+        'student_2',
+        'student_3',
+        'student_4',
+        'student_5',
+        'student_6',
+        'student_7',
+        'student_8',
+        'student_9',
+        'dish_chickenrice',
+        'dish_ckt',
+        'dish_laksa',
+        'dish_satay',
+        'dish_prata',
+        'dish_drinks'
+      ];
+      var backgrounds = [
+        { name: 'Light #E9D9B8', color: '#E9D9B8' },
+        { name: 'Dark #241A12', color: '#241A12' }
+      ];
+      var scales = [1, 2, 4];
+      var preview = document.getElementById('preview');
+
+      backgrounds.forEach(function (bg) {
+        var heading = document.createElement('h2');
+        heading.textContent = bg.name;
+        preview.appendChild(heading);
+
+        var grid = document.createElement('section');
+        grid.className = 'grid';
+        preview.appendChild(grid);
+
+        keys.forEach(function (key) {
+          var size = HC.CuteArt.sizes[key];
+          var tile = document.createElement('article');
+          tile.className = 'tile';
+
+          var label = document.createElement('div');
+          label.className = 'label';
+          label.innerHTML = '<span>' + key + '</span><span>' + size[0] + 'x' + size[1] + '</span>';
+          tile.appendChild(label);
+
+          var swatches = document.createElement('div');
+          swatches.className = 'swatches';
+          tile.appendChild(swatches);
+
+          scales.forEach(function (scale) {
+            var sample = document.createElement('div');
+            sample.className = 'sample';
+            var canvas = document.createElement('canvas');
+            canvas.width = size[0] * scale;
+            canvas.height = size[1] * scale;
+            canvas.style.background = bg.color;
+
+            var ctx = canvas.getContext('2d');
+            ctx.save();
+            ctx.scale(scale, scale);
+            HC.CuteArt.draw[key](ctx, size[0], size[1]);
+            ctx.restore();
+
+            var caption = document.createElement('span');
+            caption.textContent = scale + 'x';
+            sample.appendChild(canvas);
+            sample.appendChild(caption);
+            swatches.appendChild(sample);
+          });
+
+          grid.appendChild(tile);
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

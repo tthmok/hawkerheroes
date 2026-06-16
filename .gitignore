@@ -1,0 +1,12 @@
+# Dev / build tooling — not needed to run the game on GitHub Pages
+node_modules/
+deploy/
+.wrangler/
+.codex-prompt.md
+
+# Generated test screenshots (the test .js files are kept)
+test/*.png
+
+# Reference images not used by the game (real-person photos / scratch)
+assets/tony-tang*.jpg
+assets/test-sprite.png

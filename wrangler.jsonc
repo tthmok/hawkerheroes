@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  // Assets-only Worker (no script): serves the static Phaser game.
+  // The site mounts at halfconcept.com/hawkerheroes/ - scripts/stage-deploy.mjs
+  // nests the runtime files under deploy/hawkerheroes/ so URL paths map onto
+  // asset paths. A more-specific zone route wins over the halfconcept-landing
+  // Worker's halfconcept.com/* catch-all (longest match takes precedence),
+  // exactly like the sibling swarmdle Worker.
+  "name": "hawkerheroes",
+  "compatibility_date": "2026-06-06",
+  "assets": {
+    "directory": "./deploy"
+  },
+  // workers.dev preview stays on (https://hawkerheroes.<subdomain>.workers.dev/hawkerheroes/)
+  "workers_dev": true,
+  "routes": [
+    { "pattern": "halfconcept.com/hawkerheroes*", "zone_name": "halfconcept.com" }
+  ]
+}
