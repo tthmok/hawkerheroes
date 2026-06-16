@@ -376,6 +376,17 @@ HC.Textures = {
     g.fillStyle(0x7d4e2e, 1); g.fillCircle(cx, cy - 2, 9);       // centre
     g.generateTexture('table', W, H); g.destroy();
 
+    // round stool (a seat beside each table - hawker-style red round stool)
+    W = 46; H = 46; cx = W / 2; cy = H / 2 - 2; g = this.gfx(scene);
+    g.fillStyle(0x000000, 0.16); g.fillEllipse(cx, H - 7, 34, 10);            // ground shadow
+    g.fillStyle(0x6f4628, 1);                                                 // stubby legs
+    g.fillRoundedRect(cx - 13, cy, 5, 16, 2); g.fillRoundedRect(cx + 8, cy, 5, 16, 2);
+    g.fillStyle(0xcf5a3c, 1); g.fillCircle(cx, cy, 17);                       // seat (lower rim)
+    g.fillStyle(0xe0734f, 1); g.fillCircle(cx, cy - 2, 16);                   // seat top
+    g.lineStyle(3, 0x7a3a26, 1); g.strokeCircle(cx, cy - 2, 16);
+    g.fillStyle(0xf0a080, 0.5); g.fillEllipse(cx - 4, cy - 7, 13, 6);         // highlight
+    g.generateTexture('stool', W, H); g.destroy();
+
     // trash bin
     W = 56; H = 70; cx = W / 2; g = this.gfx(scene);
     g.fillStyle(0x000000, 0.16); g.fillEllipse(cx, H - 6, 40, 12);

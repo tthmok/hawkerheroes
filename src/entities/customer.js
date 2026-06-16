@@ -19,10 +19,15 @@ HC.Customer = function (scene, table, def, order, opts) {
   this.patienceMax = table.patience;
   this.patienceLeft = table.patience;
 
-  // seated in front of the table so the student is fully visible
-  this.seatX = table.x;
-  this.seatY = table.y - 26;
-  this.seatDepth = table.y + 30;
+  // take one of the table's two side-seats (still only 1 student per table).
+  // opts.seatIndex pins the side (used by the online guest to match the host).
+  var seats = table.seats || [{ x: table.x, y: table.y - 26 }];
+  this.seatIndex = (opts.seatIndex != null && seats[opts.seatIndex]) ? opts.seatIndex
+    : Phaser.Math.Between(0, seats.length - 1);
+  var seat = seats[this.seatIndex];
+  this.seatX = seat.x;
+  this.seatY = seat.y;
+  this.seatDepth = this.seatY + 40;
 
   // Render-only (online guest): build visuals at the seat, no walk-in / no
   // simulation. Position + state are driven by snapshots via netSet().

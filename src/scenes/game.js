@@ -148,11 +148,19 @@ HC.GameScene.prototype._buildStalls = function () {
 
 HC.GameScene.prototype._buildTables = function () {
   var spots = [[470, 330], [810, 330], [470, 470], [810, 470]];
+  var DX = 48;                       // how far each seat sits from the table centre
   this.tables = [];
   for (var i = 0; i < spots.length; i++) {
-    this.add.image(spots[i][0], spots[i][1], 'table').setDepth(spots[i][1]);
-    this._addSolid(spots[i][0], spots[i][1] + 2, 60, 46);
-    this.tables.push({ x: spots[i][0], y: spots[i][1], customer: null });
+    var tx = spots[i][0], ty = spots[i][1];
+    // a round seat on the left and right; the student takes one (1 per table)
+    this.add.image(tx - DX, ty + 12, 'stool').setDepth(ty + 10);
+    this.add.image(tx + DX, ty + 12, 'stool').setDepth(ty + 10);
+    this.add.image(tx, ty, 'table').setDepth(ty);
+    this._addSolid(tx, ty + 2, 60, 46);
+    this.tables.push({
+      x: tx, y: ty, customer: null,
+      seats: [{ x: tx - DX, y: ty - 6 }, { x: tx + DX, y: ty - 6 }]
+    });
   }
 };
 
@@ -677,7 +685,7 @@ HC.GameScene.prototype._snapshot = function () {
     var c = this.tables[t].customer;
     if (!c || !c.sprite) continue;
     snap.cu.push({
-      i: t, si: c.def.index, nm: c.def.name,
+      i: t, si: c.def.index, nm: c.def.name, se: c.seatIndex,
       x: Math.round(c.sprite.x), y: Math.round(c.sprite.y), f: c.sprite.flipX ? 1 : 0,
       st: c.state, o: c.order, d: c.delivered.map(function (b) { return b ? 1 : 0; }),
       pf: Math.round(c.patienceFrac() * 100), dl: c.deadline
@@ -714,7 +722,7 @@ HC.GameScene.prototype._makeGuestCustomer = function (cd) {
   var table = this.tables[cd.i];
   table.patience = 1;
   return new HC.Customer(this, table, { name: cd.nm, color: 0xffffff, index: cd.si }, cd.o,
-    { renderOnly: true, deadline: cd.dl ? { name: cd.dl, waves: 1 } : null });
+    { renderOnly: true, seatIndex: cd.se, deadline: cd.dl ? { name: cd.dl, waves: 1 } : null });
 };
 
 HC.GameScene.prototype._renderNet = function (dt) {
