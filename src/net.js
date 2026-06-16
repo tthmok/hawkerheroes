@@ -187,19 +187,21 @@
       setInterval(function () { if (Net.sendInput) Net.sendInput(combined()); }, 50);
     }
     function wireStick(stick, knob) {
-      var active = false, cx = 0, cy = 0, R = 46;
-      function start(e) { active = true; var r = stick.getBoundingClientRect(); cx = r.left + r.width / 2; cy = r.top + r.height / 2; move(e); }
+      // window-level move/up listeners must track the grabbing pointer only, or
+      // tapping COOK / DASH with a second finger ends the drag (drops steering).
+      var active = false, activeId = null, cx = 0, cy = 0, R = 46;
+      function start(e) { if (active) return; active = true; activeId = e.pointerId; var r = stick.getBoundingClientRect(); cx = r.left + r.width / 2; cy = r.top + r.height / 2; move(e); }
       function move(e) {
-        if (!active) return;
+        if (!active || e.pointerId !== activeId) return;
         var p = point(e), dx = p.x - cx, dy = p.y - cy, d = Math.hypot(dx, dy) || 1;
         var k = Math.min(d, R);
         knob.style.transform = 'translate(' + (dx / d * k) + 'px,' + (dy / d * k) + 'px)';
         var nx = dx / R, ny = dy / R;
         gTouch.x = Math.abs(nx) > 0.28 ? Math.max(-1, Math.min(1, nx)) : 0;
         gTouch.y = Math.abs(ny) > 0.28 ? Math.max(-1, Math.min(1, ny)) : 0;
-        e.preventDefault();
+        if (e.cancelable) e.preventDefault();
       }
-      function end() { active = false; knob.style.transform = 'translate(0,0)'; gTouch.x = 0; gTouch.y = 0; }
+      function end(e) { if (!active || e.pointerId !== activeId) return; active = false; activeId = null; knob.style.transform = 'translate(0,0)'; gTouch.x = 0; gTouch.y = 0; }
       stick.addEventListener('pointerdown', start);
       window.addEventListener('pointermove', move);
       window.addEventListener('pointerup', end);

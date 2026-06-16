@@ -94,6 +94,27 @@ function pointerWindow(type, x, y) {
     await page.evaluate(() => window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: 0, clientY: 0, pointerId: 1, pointerType: 'touch' })));
     out.stateXAfterRelease = await page.evaluate(() => window.HC.Touch.state.x);
 
+    // 4b) MULTI-TOUCH: steer with one finger and tap DASH with another. Releasing
+    //     DASH must NOT drop the joystick (the bug: a foreign pointerup ending it).
+    await page.evaluate(() => {
+      const stick = document.querySelector('.hc-stick');
+      const r = stick.getBoundingClientRect();
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      window.__sx = cx; window.__sy = cy;
+      stick.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, clientX: cx, clientY: cy, pointerId: 11, pointerType: 'touch' }));
+      window.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: cx + 60, clientY: cy, pointerId: 11, pointerType: 'touch' }));
+    });
+    out.mtSteerX = await page.evaluate(() => window.HC.Touch.state.x);             // >0, steering
+    await page.evaluate(() => document.querySelector('.hc-d').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: 12, pointerType: 'touch' })));
+    out.mtDashWhileSteer = await page.evaluate(() => ({ dash: window.HC.Touch.state.dash, x: window.HC.Touch.state.x }));
+    // release DASH (bubbles to window, just like a real second finger lifting)
+    await page.evaluate(() => document.querySelector('.hc-d').dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 12, pointerType: 'touch' })));
+    out.mtSteerXAfterDashRelease = await page.evaluate(() => window.HC.Touch.state.x);   // must STILL be >0
+    // joystick must still be live: a further move updates state
+    await page.evaluate(() => window.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: window.__sx - 60, clientY: window.__sy, pointerId: 11, pointerType: 'touch' })));
+    out.mtSteerStillLive = await page.evaluate(() => window.HC.Touch.state.x);           // now <0
+    await page.evaluate(() => window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 11, pointerType: 'touch' })));
+
     // 5) COOK/SERVE + DASH buttons set the state
     await page.evaluate(() => document.querySelector('.hc-a').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: 2, pointerType: 'touch' })));
     out.actionDown = await page.evaluate(() => window.HC.Touch.state.action);
@@ -139,6 +160,8 @@ function pointerWindow(type, x, y) {
       out.actionDown && out.dashDown && out.actionAfterAUp === false &&
       out.stateXWhileHeld > 0 && out.overlayHiddenOnMenu &&
       out.stateZeroAfterHideDespiteHeldPointer && out.padHiddenIn2PLocal &&
+      out.mtSteerX > 0 && out.mtDashWhileSteer.dash === true && out.mtDashWhileSteer.x > 0 &&
+      out.mtSteerXAfterDashRelease > 0 && out.mtSteerStillLive < 0 &&
       errors.length === 0;
     console.log(pass ? '\n>>> TOUCH TEST PASSED' : '\n>>> TOUCH TEST FAILED');
     process.exitCode = pass ? 0 : 1;

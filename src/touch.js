@@ -92,15 +92,20 @@
 
   // ---- input wiring (writes the shared `state`) ----
   function wireStick(stick, knob) {
-    var active = false, cx = 0, cy = 0, R = 46;
+    // Track the specific pointer that grabbed the joystick. The move/up/cancel
+    // listeners live on window (so a drag can leave the knob's bounds), so they
+    // MUST ignore other pointers - otherwise tapping DASH / COOK with a second
+    // finger fires this end() and drops your steering.
+    var active = false, activeId = null, cx = 0, cy = 0, R = 46;
     function start(e) {
-      active = true;
+      if (active) return;                    // already steering with another finger
+      active = true; activeId = e.pointerId;
       var r = stick.getBoundingClientRect();
       cx = r.left + r.width / 2; cy = r.top + r.height / 2;
       move(e);
     }
     function move(e) {
-      if (!active || !Touch.visible) return;   // ignore stray pointers while hidden
+      if (!active || !Touch.visible || e.pointerId !== activeId) return;
       var p = point(e), dx = p.x - cx, dy = p.y - cy, d = Math.hypot(dx, dy) || 1;
       var k = Math.min(d, R);
       knob.style.transform = 'translate(' + (dx / d * k) + 'px,' + (dy / d * k) + 'px)';
@@ -109,7 +114,11 @@
       state.y = Math.abs(ny) > 0.28 ? Math.max(-1, Math.min(1, ny)) : 0;
       if (e.cancelable) e.preventDefault();
     }
-    function end() { active = false; knob.style.transform = 'translate(0,0)'; state.x = 0; state.y = 0; }
+    function end(e) {
+      if (!active || e.pointerId !== activeId) return;   // not our finger (e.g. a button)
+      active = false; activeId = null;
+      knob.style.transform = 'translate(0,0)'; state.x = 0; state.y = 0;
+    }
     stick.addEventListener('pointerdown', start);
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', end);
