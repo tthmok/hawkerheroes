@@ -244,11 +244,12 @@
         '.hh-toast{position:fixed;left:50%;top:80px;transform:translateX(-50%);z-index:70;background:#241a12;color:#fff4dd;' +
         'padding:8px 16px;border-radius:8px;font:bold 14px Arial;transition:opacity .6s}' +
         '.hh-guest{position:fixed;inset:0;z-index:55;touch-action:none;overflow:hidden;pointer-events:none}' +
-        '.hh-stick{position:fixed;left:30px;bottom:30px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.4);z-index:56;touch-action:none;pointer-events:auto}' +
-        '.hh-knob{position:absolute;left:35px;top:35px;width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.55);pointer-events:none}' +
-        '.hh-pad{position:fixed;z-index:56;width:96px;height:96px;border-radius:50%;display:flex;align-items:center;justify-content:center;' +
-        'text-align:center;white-space:pre;font:bold 14px Arial;color:#3a2a1a;user-select:none;touch-action:none;border:3px solid rgba(0,0,0,.25);pointer-events:auto}' +
-        '.hh-a{right:30px;bottom:40px;background:rgba(232,163,61,.85)}.hh-d{right:140px;bottom:60px;width:74px;height:74px;background:rgba(111,183,214,.85)}' +
+        // sizes/positions kept in sync with the local pad (.hc-*) in touch.js
+        '.hh-stick{position:fixed;left:26px;bottom:26px;width:132px;height:132px;border-radius:50%;background:rgba(255,255,255,.16);border:3px solid rgba(255,255,255,.5);z-index:56;touch-action:none;pointer-events:auto}' +
+        '.hh-knob{position:absolute;left:36px;top:36px;width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.6);pointer-events:none}' +
+        '.hh-pad{position:fixed;z-index:56;width:104px;height:104px;border-radius:50%;display:flex;align-items:center;justify-content:center;' +
+        'text-align:center;white-space:pre;font:bold 15px Arial;color:#3a2a1a;user-select:none;touch-action:none;border:3px solid rgba(0,0,0,.25);pointer-events:auto}' +
+        '.hh-a{right:28px;bottom:40px;background:rgba(232,163,61,.9)}.hh-d{right:150px;bottom:64px;width:80px;height:80px;background:rgba(111,183,214,.9)}' +
         '.hh-pad.on{filter:brightness(1.2);transform:scale(.94)}' +
         '.hh-gmsg{position:fixed;left:50%;top:40%;transform:translateX(-50%);z-index:57;background:#241a12;color:#fff4dd;padding:14px 22px;border-radius:10px;font:bold 18px Arial}';
       var s = document.createElement('style'); s.textContent = css; document.head.appendChild(s);

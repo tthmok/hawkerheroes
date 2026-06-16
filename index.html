@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Hawker Heroes - Tony &amp; Terrance</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <style>
@@ -13,6 +16,12 @@
       background: #1a130d;
       overflow: hidden;
       font-family: Arial, sans-serif;
+      /* phone: the canvas + on-screen pad own all gestures - no page scroll/zoom */
+      touch-action: none;
+      overscroll-behavior: none;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
     #game {
       width: 100vw;
@@ -35,11 +44,38 @@
       pointer-events: none;
       user-select: none;
     }
+    /* The hawker centre is a 16:9 landscape scene. On a phone held in portrait
+       it would shrink to a sliver, so ask the player to rotate. Pure CSS - shows
+       only on small touch screens in portrait, hides itself the moment you rotate. */
+    #rotate {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: #1a130d;
+      color: #fff4dd;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font: bold 22px Arial, sans-serif;
+      padding: 24px;
+    }
+    #rotate .rot-emoji { font-size: 52px; margin-bottom: 14px; }
+    #rotate .rot-sub { font-size: 15px; font-weight: normal; color: #c9bba8; margin-top: 10px; }
+    @media (orientation: portrait) and (pointer: coarse) and (max-width: 600px) {
+      #rotate { display: flex; }
+    }
   </style>
 </head>
 <body>
   <div id="game"></div>
   <div id="hint">Hawker Heroes - M: mute &nbsp;•&nbsp; Esc: menu &nbsp;•&nbsp; gamepads supported</div>
+  <div id="rotate">
+    <div class="rot-emoji">🔄</div>
+    Rotate your device to landscape
+    <div class="rot-sub">Hawker Heroes plays best held sideways</div>
+  </div>
 
   <!-- Engine (vendored, works offline) -->
   <script src="vendor/phaser.min.js"></script>
@@ -50,6 +86,7 @@
   <script src="src/audio.js"></script>
   <script src="src/textures.js"></script>
   <script src="src/input.js"></script>
+  <script src="src/touch.js"></script>
   <script src="src/bot.js"></script>
   <script src="src/entities/stall.js"></script>
   <script src="src/entities/customer.js"></script>

@@ -27,10 +27,10 @@ server.listen(0, async()=>{
     // grab the guest's P2 x before/after holding ArrowRight (P2 = netPlayers[1])
     const before=await guest.evaluate(()=>window.HC.game.scene.getScene('Game').netPlayers[1].sprite.x);
     await guest.evaluate(()=>window.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight'})));
-    await new Promise(r=>setTimeout(r,2000));
-    await guest.evaluate(()=>window.dispatchEvent(new KeyboardEvent('keyup',{key:'ArrowRight'})));
+    await new Promise(r=>setTimeout(r,1500));
+    const got=await host.evaluate(()=>window.HC.Net.guestInput);   // sample while the key is still held
     const after=await guest.evaluate(()=>window.HC.game.scene.getScene('Game').netPlayers[1].sprite.x);
-    const got=await host.evaluate(()=>window.HC.Net.guestInput);
+    await guest.evaluate(()=>window.dispatchEvent(new KeyboardEvent('keyup',{key:'ArrowRight'})));
     const snap=await guest.evaluate(()=>{const s=window.HC.Net.snapshot;return {phase:s.ph, players:s.pl.length, p2x:s.pl[1]&&s.pl[1].x};});
     log('>>> RESULT '+JSON.stringify({
       hostSeesGuestInput:got, inputWorks:got.x>0,

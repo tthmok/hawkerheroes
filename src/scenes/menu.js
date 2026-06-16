@@ -9,6 +9,7 @@ HC.MenuScene.prototype.constructor = HC.MenuScene;
 
 HC.MenuScene.prototype.create = function () {
   var C = HC.Config, W = C.WIDTH, H = C.HEIGHT;
+  var self = this;
 
   // Phone-friendly: a ?demo URL jumps straight into a looping CPU demo.
   if (this._demoRequested()) {
@@ -18,6 +19,8 @@ HC.MenuScene.prototype.create = function () {
 
   this.numPlayers = 1;
   this.started = false;
+  if (window.HC.Touch) window.HC.Touch.hide();   // no in-game pad on the menu
+  var touch = !!(window.HC.Touch && window.HC.Touch.enabled);
 
   // backdrop
   var g = this.add.graphics();
@@ -70,6 +73,11 @@ HC.MenuScene.prototype.create = function () {
       fontFamily: 'Arial', fontSize: '15px', color: '#5a4630'
     }).setOrigin(0.5);
     this.optboxes.push({ box: box, x: bx[k], y: by });
+    // tappable selector (touch / mouse)
+    (function (n) {
+      this.add.zone(bx[k], by, 300, 76).setInteractive({ useHandCursor: true })
+        .on('pointerdown', function () { HC.Audio.init(); self._set(n); });
+    }).call(this, this.opts[k].n);
   }
 
   // controls
@@ -81,15 +89,19 @@ HC.MenuScene.prototype.create = function () {
     fontFamily: 'Arial', fontSize: '15px', fontStyle: 'bold', color: '#3a7a3a'
   }).setOrigin(0.5);
 
-  this.startText = this.add.text(W / 2, 670, 'Press SPACE / ENTER  (or gamepad A)  to START', {
-    fontFamily: 'Arial', fontSize: '22px', fontStyle: 'bold', color: '#b5532e'
+  this.startText = this.add.text(W / 2, 670,
+    touch ? '▶  TAP HERE TO START' : 'Press SPACE / ENTER  (or gamepad A)  to START', {
+    fontFamily: 'Arial', fontSize: touch ? '28px' : '22px', fontStyle: 'bold',
+    color: '#b5532e', backgroundColor: touch ? '#ffe9bf' : null, padding: touch ? { x: 18, y: 8 } : null
   }).setOrigin(0.5);
   this.tweens.add({ targets: this.startText, alpha: 0.35, duration: 650, yoyo: true, repeat: -1 });
+  // tappable start (touch / mouse) - a generous hit zone over the prompt
+  this.startZone = this.add.zone(W / 2, 670, 460, 64).setInteractive({ useHandCursor: true });
+  this.startZone.on('pointerdown', function () { HC.Audio.init(); self._start(); });
 
   this._refresh();
 
   // input
-  var self = this;
   this.input.keyboard.on('keydown', function (e) { HC.Audio.init(); });
   this.input.keyboard.on('keydown-ONE', function () { self._set(1); });
   this.input.keyboard.on('keydown-TWO', function () { self._set(2); });

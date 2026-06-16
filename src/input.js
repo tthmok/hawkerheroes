@@ -41,11 +41,22 @@ HC.InputController.prototype.sample = function () {
 
   var kbMoving = (mx !== 0 || my !== 0);
 
+  // on-screen touch controls (phones / tablets) - merged for schemes that opt
+  // in via useTouch. Movement only blends when the keyboard isn't driving.
+  var touchMoving = false;
+  if (k.useTouch && window.HC.Touch && window.HC.Touch.state) {
+    var t = window.HC.Touch.state;
+    touchMoving = (t.x !== 0 || t.y !== 0);
+    if (!kbMoving && touchMoving) { mx += t.x; my += t.y; }
+    if (t.action) action = true;
+    if (t.dash) dash = true;
+  }
+
   var pad = this.getPad();
   if (pad) {
-    // only blend pad movement when the keyboard isn't already driving, so an
-    // idle/drifting controller can't bias a keyboard player's movement
-    if (!kbMoving) {
+    // only blend pad movement when neither keyboard nor touch is already
+    // driving, so an idle/drifting controller can't bias a player's movement
+    if (!kbMoving && !touchMoving) {
       var ax = (pad.axes && pad.axes.length > 0) ? pad.axes[0].getValue() : 0;
       var ay = (pad.axes && pad.axes.length > 1) ? pad.axes[1].getValue() : 0;
       if (Math.abs(ax) > 0.25) mx += ax;

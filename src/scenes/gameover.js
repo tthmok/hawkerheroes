@@ -23,6 +23,9 @@ HC.GameOverScene.prototype._rank = function (score) {
 
 HC.GameOverScene.prototype.create = function () {
   var C = HC.Config, W = C.WIDTH, H = C.HEIGHT, r = this.result;
+  var self = this;
+  var touch = !!(window.HC.Touch && window.HC.Touch.enabled);
+  if (window.HC.Touch) window.HC.Touch.hide();
   this.cameras.main.setBackgroundColor('#241a12');
   this.cameras.main.fadeIn(280, 0, 0, 0);
 
@@ -65,15 +68,22 @@ HC.GameOverScene.prototype.create = function () {
   this.add.image(W / 2 - (r.numPlayers > 1 ? 40 : 0), 500, 'tony').setScale(2);
   if (r.numPlayers > 1) this.add.image(W / 2 + 40, 500, 'terrance').setScale(2);
 
-  this.add.text(W / 2, 600, 'Press SPACE / ENTER  to play again', {
-    fontFamily: 'Arial', fontSize: '24px', fontStyle: 'bold', color: '#bfe9c4'
+  var againText = this.add.text(W / 2, 600,
+    touch ? '▶  TAP HERE TO PLAY AGAIN' : 'Press SPACE / ENTER  to play again', {
+    fontFamily: 'Arial', fontSize: touch ? '26px' : '24px', fontStyle: 'bold',
+    color: touch ? '#241a12' : '#bfe9c4',
+    backgroundColor: touch ? '#bfe9c4' : null, padding: touch ? { x: 16, y: 8 } : null
   }).setOrigin(0.5);
-  var menu = this.add.text(W / 2, 644, 'Press  M  for the menu', {
+  var menu = this.add.text(W / 2, 648, touch ? 'Tap here for the menu' : 'Press  M  for the menu', {
     fontFamily: 'Arial', fontSize: '18px', color: '#c9bba8'
   }).setOrigin(0.5);
   this.tweens.add({ targets: menu, alpha: 0.4, duration: 700, yoyo: true, repeat: -1 });
 
-  var self = this;
+  // tappable (touch / mouse)
+  this.add.zone(W / 2, 600, 520, 64).setInteractive({ useHandCursor: true })
+    .on('pointerdown', function () { self._again(); });
+  menu.setInteractive({ useHandCursor: true }).on('pointerdown', function () { self.scene.start('Menu'); });
+
   this.input.keyboard.on('keydown-SPACE', function () { self._again(); });
   this.input.keyboard.on('keydown-ENTER', function () { self._again(); });
   this.input.keyboard.on('keydown-M', function () { self.scene.start('Menu'); });

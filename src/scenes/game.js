@@ -86,6 +86,18 @@ HC.GameScene.prototype.create = function () {
   this.input.keyboard.on('keydown-M', function () { HC.Audio.toggleMute(); });
   this.input.keyboard.on('keydown-ESC', function () { self.scene.start('Menu'); });
 
+  // on-screen touch controls for the single local cook: solo play, or the
+  // online HOST (who is P1). The demo is bot-driven, the online GUEST has its
+  // own overlay in net.js, and 2P local hot-seat needs a keyboard / pads anyway
+  // (one joystick can't drive both players), so it's suppressed there.
+  if (window.HC.Touch && !this.demo && (this.numPlayers === 1 || this.online === 'host')) {
+    window.HC.Touch.arm();
+    window.HC.Touch.show();
+    this.events.once('shutdown', function () {
+      if (window.HC.Touch) { window.HC.Touch.disarm(); window.HC.Touch.hide(); }
+    });
+  }
+
   this.nextSpawnAt = 0;
   this._startCountdown();
 };
@@ -267,12 +279,13 @@ HC.GameScene.prototype._buildPlayers = function () {
   if (this.numPlayers === 1) {
     schemes = [{
       up: [KC.W, KC.UP], down: [KC.S, KC.DOWN], left: [KC.A, KC.LEFT], right: [KC.D, KC.RIGHT],
-      action: [KC.SPACE, KC.ENTER], dash: [KC.SHIFT, KC.SLASH, KC.F], padIndex: 0
+      action: [KC.SPACE, KC.ENTER], dash: [KC.SHIFT, KC.SLASH, KC.F], padIndex: 0, useTouch: true
     }];
   } else {
     schemes = [
+      // P1 (Tony) also accepts the on-screen pad, so a phone host can play co-op
       { up: [KC.W], down: [KC.S], left: [KC.A], right: [KC.D],
-        action: [KC.SPACE], dash: [KC.SHIFT, KC.F], padIndex: 0 },
+        action: [KC.SPACE], dash: [KC.SHIFT, KC.F], padIndex: 0, useTouch: true },
       { up: [KC.UP], down: [KC.DOWN], left: [KC.LEFT], right: [KC.RIGHT],
         action: [KC.ENTER, KC.NP0], dash: [KC.SLASH, KC.NP1, KC.PERIOD], padIndex: 1 }
     ];
