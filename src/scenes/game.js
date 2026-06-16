@@ -519,7 +519,7 @@ HC.GameScene.prototype._handleInteractions = function (time, dt) {
       } else if (nearTrash && p.held.length > 0) {
         this.kitchen.dirty += p.held.length;   // tossed plates are dirty
         p.clearHands();
-        HC.Audio.deny();
+        HC.Audio.toss();
         this._float(this.trash.x, this.trash.y - 30, 'Tossed', '#cdd5cd');
       }
     }
@@ -584,7 +584,7 @@ HC.GameScene.prototype._serveComplete = function (p, cust, time) {
   var base = cust.deadline ? dl.FINISH_BONUS : S.ORDER_BONUS;
   var bonus = Math.round((base + tip) * this.state.combo);
   this.state.score += bonus;
-  if (cust.deadline) this.stats.papers += 1;
+  if (cust.deadline) { this.stats.papers += 1; HC.Audio.paper(); }
 
   this._float(cust.sprite.x, cust.sprite.y - 58,
     (cust.deadline ? cust.deadline + ' SUBMITTED! +' : 'SERVED! +') + bonus, '#ffe6a0');

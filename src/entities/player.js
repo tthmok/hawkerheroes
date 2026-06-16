@@ -92,6 +92,7 @@ HC.Player.prototype.update = function (dt, time) {
     this.dashUntil = time + HC.Config.DASH_TIME;
     this.dashCDUntil = time + HC.Config.DASH_COOLDOWN;
     this._dashQueuedAt = 0;
+    HC.Audio.dash();
   }
   if (time < this.dashUntil) speed = HC.Config.DASH_SPEED;
 

@@ -99,6 +99,7 @@ HC.Customer.prototype._activate = function () {
   this.patienceLeft = this.patienceMax;
   this._setOrderVisible(true);
   if (this.badge) this.badge.setVisible(true);
+  HC.Audio.arrive();                 // gentle "order up" notification
   var self = this;
   this.iconImgs.forEach(function (img) {
     self.scene.tweens.add({ targets: img, scale: { from: 0.2, to: 0.62 }, duration: 220, ease: 'Back.out' });
