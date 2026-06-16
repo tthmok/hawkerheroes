@@ -99,17 +99,19 @@ HC.Player.prototype.update = function (dt, time) {
   if (s.x < -0.05) this.sprite.setFlipX(true);
   else if (s.x > 0.05) this.sprite.setFlipX(false);
 
+  this._drawVisuals();
+};
+
+// Position the ring / name / held items relative to the sprite (shared by
+// the local update() and the networked renderNet()).
+HC.Player.prototype._drawVisuals = function () {
   var x = this.sprite.x, y = this.sprite.y;
   this.sprite.setDepth(y);
-
-  // accent ring
   this.ring.clear();
   this.ring.setDepth(y - 1);
   this.ring.lineStyle(3, this.hero.tint, 0.9);
   this.ring.strokeEllipse(x, y + 26, 40, 16);
 
-  // labels + held items follow - pushed down together if they'd slip under the
-  // HUD bar (which happens when cooking at the top row of stalls).
   var nameY = y - 56, trayY = y - 38;
   var minY = HC.Config.HUD_HEIGHT + 10;
   if (nameY < minY) { var push = minY - nameY; nameY += push; trayY += push; }
@@ -118,6 +120,18 @@ HC.Player.prototype.update = function (dt, time) {
     var img = this.heldImgs[i];
     img.setPosition(x + (img._ox || 0), trayY).setDepth(y + 31);
   }
+};
+
+// --- networked guest rendering (no simulation) ---
+HC.Player.prototype.renderNet = function (x, y, flip) {
+  this.sprite.setPosition(x, y).setFlipX(!!flip);
+  this._drawVisuals();
+};
+
+HC.Player.prototype.setHeldIds = function (ids) {
+  if (this.held.join(',') === ids.join(',')) return;   // unchanged
+  this.clearHands();
+  for (var i = 0; i < ids.length; i++) this.addDish(ids[i]);
 };
 
 HC.Player.prototype.destroy = function () {

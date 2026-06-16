@@ -37,12 +37,21 @@ HC.GameScene.prototype.create = function () {
   this._buildSink();
   this._buildKopiBar();
   this._buildEntrance();
+
+  // online guest: render-only from snapshots (no simulation)
+  if (this.online === 'guest') {
+    this.hud = new HC.Hud(this);
+    this._initGuest();
+    return;
+  }
+
   this._buildPlayers();
 
   // ambient patrons (moving obstacles)
   this.npcGroup = this.physics.add.group();
   this.npcs = [];
   this.nextNpcAt = 0;
+  this._npcId = 0;
 
   // collisions
   this.physics.add.collider(this.playerSprites, this.solids);
@@ -246,6 +255,7 @@ HC.GameScene.prototype._buildEntrance = function () {
 HC.GameScene.prototype._maybeSpawnNpc = function (time) {
   if (this.npcs.length >= 3 || time < this.nextNpcAt) return;
   var npc = new HC.Npc(this, this.entrance.x, HC.Config.PLAY.y2 - 8);
+  npc.id = ++this._npcId;
   this.npcGroup.add(npc.sprite);
   this.npcs.push(npc);
   this.nextNpcAt = time + Phaser.Math.Between(2600, 5200);
@@ -312,6 +322,8 @@ HC.GameScene.prototype._startCountdown = function () {
 HC.GameScene.prototype.update = function (time, delta) {
   var dt = delta;
 
+  if (this.online === 'guest') { this._renderNet(dt); return; }
+
   // players + patrons move during the countdown but freeze once the round ends
   if (!this.ended) {
     for (var i = 0; i < this.players.length; i++) this.players[i].update(dt, time);
@@ -341,6 +353,12 @@ HC.GameScene.prototype.update = function (time, delta) {
   for (var s = 0; s < this.stalls.length; s++) this.stalls[s].update(time);
   this._drawSink();
   this.hud.update(this.state, this.players, this.kitchen);
+
+  // host: broadcast a state snapshot to the guest (~20 Hz)
+  if (this.online === 'host' && window.HC.Net && window.HC.Net.sendState) {
+    this._netAccum = (this._netAccum || 0) + dt;
+    if (this._netAccum >= 50) { this._netAccum -= 50; window.HC.Net.sendState(this._snapshot()); }
+  }
 };
 
 // ----------------------------------------------------------------
@@ -630,6 +648,120 @@ HC.GameScene.prototype._sparkle = function (x, y) {
 };
 
 // ----------------------------------------------------------------
+// ---------------- Online co-op: host serialises, guest renders ----------------
+HC.GameScene.prototype._snapshot = function () {
+  var snap = {
+    ph: this.state.running ? 'run' : (this.ended ? 'over' : 'wait'),
+    pl: [], cu: [], np: [],
+    k: { c: this.kitchen.clean, d: this.kitchen.dirty },
+    s: { sc: this.state.score, cb: this.state.combo, sk: this.state.streak, tl: Math.round(this.state.timeLeft) }
+  };
+  for (var i = 0; i < this.players.length; i++) {
+    var p = this.players[i];
+    snap.pl.push({ x: Math.round(p.sprite.x), y: Math.round(p.sprite.y), f: p.sprite.flipX ? 1 : 0, h: p.held.slice() });
+  }
+  for (var t = 0; t < this.tables.length; t++) {
+    var c = this.tables[t].customer;
+    if (!c || !c.sprite) continue;
+    snap.cu.push({
+      i: t, si: c.def.index, nm: c.def.name,
+      x: Math.round(c.sprite.x), y: Math.round(c.sprite.y), f: c.sprite.flipX ? 1 : 0,
+      st: c.state, o: c.order, d: c.delivered.map(function (b) { return b ? 1 : 0; }),
+      pf: Math.round(c.patienceFrac() * 100), dl: c.deadline
+    });
+  }
+  for (var n = 0; n < this.npcs.length; n++) {
+    var npc = this.npcs[n];
+    snap.np.push({ id: npc.id, si: npc.si, x: Math.round(npc.sprite.x), y: Math.round(npc.sprite.y), f: npc.sprite.flipX ? 1 : 0 });
+  }
+  if (this.ended) snap.go = {
+    score: this.state.score, served: this.stats.served, angry: this.stats.angry,
+    papers: this.stats.papers, bestStreak: this.stats.bestStreak
+  };
+  return snap;
+};
+
+HC.GameScene.prototype._initGuest = function () {
+  this.netPlayers = [
+    new HC.Player(this, 600, 400, HC.Data.heroes.p1, null),
+    new HC.Player(this, 700, 400, HC.Data.heroes.p2, null)
+  ];
+  this.netPlayers.forEach(function (p) { if (p.sprite.body) p.sprite.body.enable = false; });
+  this.netCustomers = {};
+  this.netNpcs = {};
+  this._shownGO = false;
+  this.add.text(HC.Config.WIDTH / 2, HC.Config.HEIGHT - 16,
+    '🌐  ONLINE - you are Terrance (use the on-screen controls)', {
+      fontFamily: 'Arial', fontSize: '15px', fontStyle: 'bold',
+      color: '#fff4dd', backgroundColor: 'rgba(36,26,18,0.65)', padding: { x: 8, y: 3 }
+    }).setOrigin(0.5, 1).setDepth(6001);
+};
+
+HC.GameScene.prototype._makeGuestCustomer = function (cd) {
+  var table = this.tables[cd.i];
+  table.patience = 1;
+  return new HC.Customer(this, table, { name: cd.nm, color: 0xffffff, index: cd.si }, cd.o,
+    { renderOnly: true, deadline: cd.dl ? { name: cd.dl, waves: 1 } : null });
+};
+
+HC.GameScene.prototype._renderNet = function (dt) {
+  var snap = window.HC.Net && window.HC.Net.snapshot;
+  if (!snap) return;
+  var K = 0.3;
+
+  for (var i = 0; i < this.netPlayers.length; i++) {
+    var pd = snap.pl[i]; if (!pd) continue;
+    var p = this.netPlayers[i];
+    p.setHeldIds(pd.h || []);
+    p.renderNet(p.sprite.x + (pd.x - p.sprite.x) * K, p.sprite.y + (pd.y - p.sprite.y) * K, pd.f);
+  }
+
+  var seen = {};
+  for (var c = 0; c < snap.cu.length; c++) {
+    var cd = snap.cu[c]; seen[cd.i] = true;
+    var cust = this.netCustomers[cd.i] || (this.netCustomers[cd.i] = this._makeGuestCustomer(cd));
+    cust.netSet(cd);
+    cust.update(dt, 0);
+  }
+  for (var ti in this.netCustomers) {
+    if (!seen[ti]) { this.netCustomers[ti].destroy(); delete this.netCustomers[ti]; }
+  }
+
+  var seenN = {};
+  for (var n = 0; n < snap.np.length; n++) {
+    var nd = snap.np[n]; seenN[nd.id] = true;
+    var s = this.netNpcs[nd.id] ||
+      (this.netNpcs[nd.id] = this.add.image(nd.x, nd.y, 'student_' + nd.si).setScale(0.82));
+    s.x += (nd.x - s.x) * K; s.y += (nd.y - s.y) * K;
+    s.setFlipX(!!nd.f); s.setDepth(Math.round(s.y));
+  }
+  for (var id in this.netNpcs) {
+    if (!seenN[id]) { this.netNpcs[id].destroy(); delete this.netNpcs[id]; }
+  }
+
+  this.kitchen.clean = snap.k.c; this.kitchen.dirty = snap.k.d;
+  this.state.score = snap.s.sc; this.state.combo = snap.s.cb;
+  this.state.streak = snap.s.sk; this.state.timeLeft = snap.s.tl;
+  this._drawSink();
+  this.hud.update(this.state, this.netPlayers, this.kitchen);
+
+  if (snap.go && !this._shownGO) { this._shownGO = true; this._guestGameOver(snap.go); }
+};
+
+HC.GameScene.prototype._guestGameOver = function (go) {
+  var W = HC.Config.WIDTH, H = HC.Config.HEIGHT;
+  this.add.rectangle(W / 2, H / 2, W, H, 0x241a12, 0.82).setDepth(7000);
+  this.add.text(W / 2, H / 2 - 44, "TIME'S UP!", {
+    fontFamily: 'Arial Black, Arial', fontSize: '64px', fontStyle: 'bold', color: '#ffd27f'
+  }).setOrigin(0.5).setDepth(7001);
+  this.add.text(W / 2, H / 2 + 26, 'Final score: ' + go.score, {
+    fontFamily: 'Arial', fontSize: '30px', color: '#fff4dd'
+  }).setOrigin(0.5).setDepth(7001);
+  this.add.text(W / 2, H / 2 + 76, 'Reload the page to play again', {
+    fontFamily: 'Arial', fontSize: '18px', color: '#c9bba8'
+  }).setOrigin(0.5).setDepth(7001);
+};
+
 HC.GameScene.prototype._endRound = function () {
   if (!this.state.running) return;
   this.state.running = false;

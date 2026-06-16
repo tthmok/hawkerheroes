@@ -24,6 +24,28 @@ HC.Customer = function (scene, table, def, order, opts) {
   this.seatY = table.y - 26;
   this.seatDepth = table.y + 30;
 
+  // Render-only (online guest): build visuals at the seat, no walk-in / no
+  // simulation. Position + state are driven by snapshots via netSet().
+  if (opts.renderOnly) {
+    this.renderOnly = true;
+    this.state = 'active';
+    this.patienceMax = 1; this.patienceLeft = 1;
+    this.sprite = scene.add.image(this.seatX, this.seatY, 'student_' + def.index)
+      .setScale(0.86).setDepth(this.seatDepth);
+    this.nameLabel = scene.add.text(this.seatX, this.seatY + 24, def.name, {
+      fontFamily: 'Arial', fontSize: '13px', fontStyle: 'bold',
+      color: '#ffffff', backgroundColor: 'rgba(0,0,0,0.35)', padding: { x: 4, y: 1 }
+    }).setOrigin(0.5).setDepth(4001);
+    this.bubbleBg = scene.add.graphics().setDepth(4000);
+    this.iconImgs = []; this.checks = [];
+    this.badge = this.deadline ? scene.add.text(this.seatX, this.seatY, '', {
+      fontFamily: 'Arial', fontSize: '13px', fontStyle: 'bold',
+      color: '#fff4dd', backgroundColor: '#c0432f', padding: { x: 7, y: 2 }
+    }).setOrigin(0.5).setDepth(4004) : null;
+    this._buildOrder(order);
+    return;
+  }
+
   var ent = scene.entrance || { x: table.x, y: HC.Config.PLAY.y2 + 16 };
   this.sprite = scene.add.image(ent.x, ent.y, 'student_' + def.index).setScale(0.86).setDepth(ent.y);
 
@@ -143,6 +165,26 @@ HC.Customer.prototype.patienceFrac = function () {
   return Math.max(0, this.patienceLeft / this.patienceMax);
 };
 
+// --- online guest: drive this render-only customer from a snapshot ---
+HC.Customer.prototype.netSet = function (cd) {
+  if (this.order.join(',') !== cd.o.join(',')) this._buildOrder(cd.o);   // order changed (new wave)
+  this.state = cd.st;
+  this.sprite.x += (cd.x - this.sprite.x) * 0.3;     // interpolate toward target
+  this.sprite.y += (cd.y - this.sprite.y) * 0.3;
+  this.sprite.setFlipX(!!cd.f);
+  var seated = (cd.st === 'active' || cd.st === 'resting');
+  this.sprite.setDepth(seated ? this.seatDepth : Math.round(this.sprite.y));
+  this.patienceLeft = (cd.pf || 0) / 100;            // patienceMax === 1
+  for (var i = 0; i < this.iconImgs.length; i++) {
+    var d = !!(cd.d && cd.d[i]);
+    this.delivered[i] = d;
+    this.iconImgs[i].setAlpha(seated ? (d ? 0.28 : 1) : 0);
+    if (this.checks[i]) this.checks[i].setVisible(seated && d);
+  }
+  this.bubbleBg.setAlpha(seated ? 1 : 0);
+  if (this.badge) this.badge.setVisible(seated);
+};
+
 HC.Customer.prototype.isComplete = function () {
   for (var i = 0; i < this.delivered.length; i++) if (!this.delivered[i]) return false;
   return true;
@@ -175,8 +217,10 @@ HC.Customer.prototype.update = function (dt, time) {
   if (this.nameLabel) this.nameLabel.setPosition(this.seatX, this.seatY + 24);
   if (this.state !== 'active') return;
 
-  this.patienceLeft -= dt;
-  if (this.patienceLeft < 0) this.patienceLeft = 0;
+  if (!this.renderOnly) {
+    this.patienceLeft -= dt;
+    if (this.patienceLeft < 0) this.patienceLeft = 0;
+  }
 
   var frac = this.patienceFrac();
   var col = 0x57c777;
@@ -240,4 +284,8 @@ HC.Customer.prototype.leave = function (happy, onGone) {
 HC.Customer.prototype.destroy = function () {
   if (this.sprite) { this.sprite.destroy(); this.sprite = null; }
   if (this.nameLabel) { this.nameLabel.destroy(); this.nameLabel = null; }
+  if (this.bubbleBg) { this.bubbleBg.destroy(); this.bubbleBg = null; }
+  if (this.iconImgs) { this.iconImgs.forEach(function (i) { i.destroy(); }); this.iconImgs = []; }
+  if (this.checks) { this.checks.forEach(function (c) { c.destroy(); }); this.checks = []; }
+  if (this.badge) { this.badge.destroy(); this.badge = null; }
 };

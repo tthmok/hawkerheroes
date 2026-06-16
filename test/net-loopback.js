@@ -21,13 +21,22 @@ server.listen(0, async()=>{
     log('guest joining; waiting for P2P connect (up to 60s)...');
     await host.waitForFunction(()=>{const g=window.HC.game.scene.getScene('Game');return g&&g.scene.isActive()&&g.online==='host';},{timeout:60000});
     log('>>> PEER CONNECTED (host started the game)');
-    await guest.waitForFunction(()=>!!document.querySelector('.hh-guest video'),{timeout:25000});
-    log('>>> guest received video stream element');
+    // guest starts its renderer scene on the first snapshot
+    await guest.waitForFunction(()=>{const g=window.HC.game.scene.getScene('Game');return g&&g.scene.isActive()&&g.online==='guest'&&!!window.HC.Net.snapshot;},{timeout:25000});
+    log('>>> guest received first snapshot and started its render-only scene');
+    // grab the guest's P2 x before/after holding ArrowRight (P2 = netPlayers[1])
+    const before=await guest.evaluate(()=>window.HC.game.scene.getScene('Game').netPlayers[1].sprite.x);
     await guest.evaluate(()=>window.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight'})));
-    await new Promise(r=>setTimeout(r,1500));
+    await new Promise(r=>setTimeout(r,2000));
+    await guest.evaluate(()=>window.dispatchEvent(new KeyboardEvent('keyup',{key:'ArrowRight'})));
+    const after=await guest.evaluate(()=>window.HC.game.scene.getScene('Game').netPlayers[1].sprite.x);
     const got=await host.evaluate(()=>window.HC.Net.guestInput);
-    const vid=await guest.evaluate(()=>{const v=document.querySelector('.hh-guest video');return {w:v&&v.videoWidth,h:v&&v.videoHeight,playing:v&&!v.paused};});
-    log('>>> RESULT '+JSON.stringify({hostSeesGuestInput:got, inputWorks:got.x>0, video:vid}));
+    const snap=await guest.evaluate(()=>{const s=window.HC.Net.snapshot;return {phase:s.ph, players:s.pl.length, p2x:s.pl[1]&&s.pl[1].x};});
+    log('>>> RESULT '+JSON.stringify({
+      hostSeesGuestInput:got, inputWorks:got.x>0,
+      guestP2MovedRight:(after-before)>4, before:Math.round(before), after:Math.round(after),
+      snapshot:snap
+    }));
   }catch(e){log('FAILED: '+e.message);}
   finally{await bH.close();await bG.close();server.close();}
 });

@@ -1,8 +1,10 @@
 // =====================================================================
-//  Online co-op via Trystero (WebRTC P2P, no backend).
-//  HOST runs the whole game and streams its canvas to the GUEST as video;
-//  the GUEST shows that video and sends its input (keyboard / touch) back.
-//  The host feeds the guest's input into Player 2.
+//  Online co-op via Trystero (WebRTC P2P, no backend) - host-authoritative.
+//  HOST runs the whole simulation and sends a compact state snapshot ~20x/sec
+//  over the data channel. The GUEST runs its own Phaser scene as a pure
+//  RENDERER (no physics) that reconciles to each snapshot with interpolation,
+//  and sends its input (keyboard / touch) back. The host feeds the guest's
+//  input into Player 2.
 //
 //  Loaded as a CLASSIC script. Online needs http(s) (the game itself still
 //  runs offline over file:// - this just no-ops there).
@@ -78,6 +80,8 @@
       var room = Net.room = joinRoom(APP, code);
       var inp = room.makeAction('inp');
       inp.onMessage = function (data) { if (data) Net.guestInput = data; };
+      var stateAct = room.makeAction('state');
+      Net.sendState = function (s) { stateAct.send(s); };
 
       setCard('<h2>Waiting for Player 2…</h2>' +
         '<p>Share this code with your friend:</p>' +
@@ -93,12 +97,6 @@
         Net.peer = peerId;
         closeLobby();
         window.HC.game.scene.start('Game', { numPlayers: 2, online: 'host' });
-        setTimeout(function () {
-          try {
-            var stream = window.HC.game.canvas.captureStream(30);
-            room.addStream(stream, peerId);
-          } catch (e) { console.warn('captureStream failed:', e && e.message); }
-        }, 500);
       };
       room.onPeerLeave = function () {
         Net.guestInput = { x: 0, y: 0, action: false, dash: false };
@@ -113,27 +111,37 @@
       var room = Net.room = joinRoom(APP, code);
       var inp = room.makeAction('inp');
       Net.sendInput = function (d) { inp.send(d); };
+      var stateAct = room.makeAction('state');
+      var gstarted = false;
+      stateAct.onMessage = function (snap) {
+        Net.snapshot = snap;
+        if (!gstarted) {
+          gstarted = true;
+          closeLobby();
+          window.HC.game.scene.start('Game', { online: 'guest' });
+          showGuestControls();
+        }
+      };
 
       setCard('<h2>Connecting…</h2><p>Joining room <b>' + code + '</b></p>' +
         '<p class="hh-dim">Waiting for the host\'s game…</p>' +
         '<button id="hh-cancel" class="hh-close">Cancel</button>');
       lobby.querySelector('#hh-cancel').onclick = function () { location.reload(); };
 
-      room.onPeerStream = function (stream) { closeLobby(); showGuestView(stream); };
       room.onPeerLeave = function () { showGuestMessage('Host disconnected. Reload to rejoin.'); };
 
       startGuestInput();
     }
 
-    // ----- guest: full-screen video + touch controls + input -----
+    // ----- guest: transparent touch-control overlay over the Phaser canvas -----
+    // The guest now runs its own Phaser scene as a pure renderer (it reconciles
+    // to the host's snapshots). This overlay only adds the on-screen joystick /
+    // buttons; the canvas underneath shows the game, so the wrap is transparent
+    // and ignores pointer events except on the controls themselves.
     var guestView = null;
-    function showGuestView(stream) {
-      if (guestView) { guestView.video.srcObject = stream; return; }
+    function showGuestControls() {
+      if (guestView) return;
       var wrap = el('div', 'hh-guest');
-      var video = document.createElement('video');
-      video.autoplay = true; video.playsInline = true; video.muted = true;
-      video.srcObject = stream;
-      wrap.appendChild(video);
 
       // left joystick
       var stick = el('div', 'hh-stick'); var knob = el('div', 'hh-knob');
@@ -144,15 +152,14 @@
       wrap.appendChild(aBtn); wrap.appendChild(dBtn);
 
       document.body.appendChild(wrap);
-      guestView = { wrap: wrap, video: video };
-      video.play().catch(function () {});
+      guestView = { wrap: wrap };
 
       wireStick(stick, knob);
       wireButton(aBtn, 'action');
       wireButton(dBtn, 'dash');
     }
     function showGuestMessage(msg) {
-      if (!guestView) return;
+      if (!guestView) { toast(msg); return; }
       var m = el('div', 'hh-gmsg', msg);
       guestView.wrap.appendChild(m);
     }
@@ -236,12 +243,11 @@
         '.hh-code-big{font:bold 52px monospace;letter-spacing:8px;color:#2f7a3a;margin:8px 0}' +
         '.hh-toast{position:fixed;left:50%;top:80px;transform:translateX(-50%);z-index:70;background:#241a12;color:#fff4dd;' +
         'padding:8px 16px;border-radius:8px;font:bold 14px Arial;transition:opacity .6s}' +
-        '.hh-guest{position:fixed;inset:0;z-index:55;background:#000;touch-action:none;overflow:hidden}' +
-        '.hh-guest video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}' +
-        '.hh-stick{position:fixed;left:30px;bottom:30px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.4);z-index:56;touch-action:none}' +
+        '.hh-guest{position:fixed;inset:0;z-index:55;touch-action:none;overflow:hidden;pointer-events:none}' +
+        '.hh-stick{position:fixed;left:30px;bottom:30px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.4);z-index:56;touch-action:none;pointer-events:auto}' +
         '.hh-knob{position:absolute;left:35px;top:35px;width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.55);pointer-events:none}' +
         '.hh-pad{position:fixed;z-index:56;width:96px;height:96px;border-radius:50%;display:flex;align-items:center;justify-content:center;' +
-        'text-align:center;white-space:pre;font:bold 14px Arial;color:#3a2a1a;user-select:none;touch-action:none;border:3px solid rgba(0,0,0,.25)}' +
+        'text-align:center;white-space:pre;font:bold 14px Arial;color:#3a2a1a;user-select:none;touch-action:none;border:3px solid rgba(0,0,0,.25);pointer-events:auto}' +
         '.hh-a{right:30px;bottom:40px;background:rgba(232,163,61,.85)}.hh-d{right:140px;bottom:60px;width:74px;height:74px;background:rgba(111,183,214,.85)}' +
         '.hh-pad.on{filter:brightness(1.2);transform:scale(.94)}' +
         '.hh-gmsg{position:fixed;left:50%;top:40%;transform:translateX(-50%);z-index:57;background:#241a12;color:#fff4dd;padding:14px 22px;border-radius:10px;font:bold 18px Arial}';
