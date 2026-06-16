@@ -20,7 +20,7 @@ HC.MenuScene.prototype.create = function () {
   this.numPlayers = 1;
   this.started = false;
   if (window.HC.Touch) window.HC.Touch.hide();   // no in-game pad on the menu
-  var touch = !!(window.HC.Touch && window.HC.Touch.enabled);
+  var touch = this.touch = !!(window.HC.Touch && window.HC.Touch.enabled);
 
   // backdrop
   var g = this.add.graphics();
@@ -89,14 +89,25 @@ HC.MenuScene.prototype.create = function () {
     fontFamily: 'Arial', fontSize: '15px', fontStyle: 'bold', color: '#3a7a3a'
   }).setOrigin(0.5);
 
-  this.startText = this.add.text(W / 2, 670,
-    touch ? '▶  TAP HERE TO START' : 'Press SPACE / ENTER  (or gamepad A)  to START', {
-    fontFamily: 'Arial', fontSize: touch ? '28px' : '22px', fontStyle: 'bold',
-    color: '#b5532e', backgroundColor: touch ? '#ffe9bf' : null, padding: touch ? { x: 18, y: 8 } : null
+  // On a phone the bottom edge is the riskiest place for a tap target, so the
+  // touch START button lives higher up and is large + filled; keyboard users
+  // keep the slim prompt near the bottom.
+  var startY = touch ? 598 : 670;
+  if (touch) {
+    this.startBtnBg = this.add.graphics();
+    this.startBtnBg.fillStyle(0xe8a33d, 1);
+    this.startBtnBg.fillRoundedRect(W / 2 - 200, startY - 36, 400, 72, 16);
+    this.startBtnBg.lineStyle(4, 0xb5772a, 1);
+    this.startBtnBg.strokeRoundedRect(W / 2 - 200, startY - 36, 400, 72, 16);
+  }
+  this.startText = this.add.text(W / 2, startY,
+    touch ? '▶  START' : 'Press SPACE / ENTER  (or gamepad A)  to START', {
+    fontFamily: touch ? 'Arial Black, Arial' : 'Arial', fontSize: touch ? '40px' : '22px', fontStyle: 'bold',
+    color: touch ? '#241a12' : '#b5532e'
   }).setOrigin(0.5);
-  this.tweens.add({ targets: this.startText, alpha: 0.35, duration: 650, yoyo: true, repeat: -1 });
-  // tappable start (touch / mouse) - a generous hit zone over the prompt
-  this.startZone = this.add.zone(W / 2, 670, 460, 64).setInteractive({ useHandCursor: true });
+  this.tweens.add({ targets: this.startText, alpha: touch ? 0.6 : 0.35, duration: 650, yoyo: true, repeat: -1 });
+  // tappable start (touch / mouse) - a generous hit zone over the button
+  this.startZone = this.add.zone(W / 2, startY, 420, 80).setInteractive({ useHandCursor: true });
   this.startZone.on('pointerdown', function () { HC.Audio.init(); self._start(); });
 
   this._refresh();
@@ -168,7 +179,13 @@ HC.MenuScene.prototype._refresh = function () {
   var pads = (this.input.gamepad && this.input.gamepad.total) ? this.input.gamepad.total : 0;
   this.padNote.setText(pads > 0 ? ('🎮 ' + pads + ' gamepad(s) detected') : '');
 
-  if (this.numPlayers === 1) {
+  if (this.touch) {
+    this.controlText.setText(
+      this.numPlayers === 1
+        ? 'Tap 1 PLAYER (you are here), then tap START below.\nA joystick + COOK and DASH buttons appear in the game.'
+        : '2 players need 2 keyboards / gamepads on this device.\nFor phone co-op use the green “Play Online” button instead.'
+    );
+  } else if (this.numPlayers === 1) {
     this.controlText.setText(
       'Move: WASD or Arrow Keys     Cook (hold) / Serve (tap): SPACE or ENTER     Dash: SHIFT'
     );

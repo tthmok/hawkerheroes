@@ -26,6 +26,11 @@
     #game {
       width: 100vw;
       height: 100vh;
+      /* dvh = the actually-visible area on phones (vh is the larger
+         chrome-hidden height, which pushes the canvas off-screen). main.js
+         also pins this to window.innerHeight for browsers without dvh. */
+      width: 100dvw;
+      height: 100dvh;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -65,6 +70,10 @@
     #rotate .rot-sub { font-size: 15px; font-weight: normal; color: #c9bba8; margin-top: 10px; }
     @media (orientation: portrait) and (pointer: coarse) and (max-width: 600px) {
       #rotate { display: flex; }
+    }
+    /* the footer hint is keyboard/gamepad guidance - hide it on touch devices */
+    @media (pointer: coarse) {
+      #hint { display: none; }
     }
   </style>
 </head>

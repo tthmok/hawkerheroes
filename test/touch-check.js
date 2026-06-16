@@ -45,6 +45,17 @@ function pointerWindow(type, x, y) {
     // 1) touch detected
     out.touchEnabled = await page.evaluate(() => !!(window.HC.Touch && window.HC.Touch.enabled));
 
+    // 1b) the canvas must fit entirely within the visible viewport (no clipped
+    //     top/bottom) so the HUD, on-screen buttons and START prompt are reachable
+    await new Promise(r => setTimeout(r, 400));   // let fitViewport + scale.refresh settle
+    out.viewportFit = await page.evaluate(() => {
+      const r = window.HC.game.canvas.getBoundingClientRect();
+      return {
+        canvasH: Math.round(r.height), winH: window.innerHeight, top: Math.round(r.top), bottom: Math.round(r.bottom),
+        fits: r.top >= -1 && r.bottom <= window.innerHeight + 1 && r.left >= -1 && r.right <= window.innerWidth + 1
+      };
+    });
+
     // 2) menu start prompt is interactive; tap it to start (no keyboard)
     out.startZoneIsInteractive = await page.evaluate(() => {
       const m = window.HC.game.scene.getScene('Menu');
@@ -122,7 +133,7 @@ function pointerWindow(type, x, y) {
 
     out.errors = errors; out.warnings = warnings;
     console.log(JSON.stringify(out, null, 2));
-    const pass = out.touchEnabled && out.startZoneIsInteractive && out.startedViaTap &&
+    const pass = out.touchEnabled && out.viewportFit.fits && out.startZoneIsInteractive && out.startedViaTap &&
       out.overlay.stick && out.overlay.aBtn && out.overlay.dBtn && out.overlay.visible &&
       out.stateXAfterStickRight > 0 && out.playerMovedRight && out.stateXAfterRelease === 0 &&
       out.actionDown && out.dashDown && out.actionAfterAUp === false &&

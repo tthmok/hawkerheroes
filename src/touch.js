@@ -131,13 +131,15 @@
   function injectStyles() {
     var css =
       '.hc-pad-wrap{position:fixed;inset:0;z-index:48;pointer-events:none;touch-action:none}' +
-      '.hc-stick{position:fixed;left:26px;bottom:26px;width:132px;height:132px;border-radius:50%;' +
-      'background:rgba(255,255,255,.16);border:3px solid rgba(255,255,255,.5);z-index:49;touch-action:none;pointer-events:auto}' +
-      '.hc-knob{position:absolute;left:36px;top:36px;width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.6);pointer-events:none}' +
+      // bottom/side offsets add the safe-area inset so controls clear the phone's
+      // home indicator / gesture bar (otherwise the first tap is eaten by the OS)
+      '.hc-stick{position:fixed;left:calc(26px + env(safe-area-inset-left));bottom:calc(30px + env(safe-area-inset-bottom));width:132px;height:132px;border-radius:50%;' +
+      'background:rgba(255,255,255,.18);border:3px solid rgba(255,255,255,.55);z-index:49;touch-action:none;pointer-events:auto}' +
+      '.hc-knob{position:absolute;left:36px;top:36px;width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.65);pointer-events:none}' +
       '.hc-pad{position:fixed;z-index:49;width:104px;height:104px;border-radius:50%;display:flex;align-items:center;justify-content:center;' +
-      'text-align:center;white-space:pre;font:bold 15px Arial;color:#3a2a1a;user-select:none;touch-action:none;border:3px solid rgba(0,0,0,.25);pointer-events:auto}' +
-      '.hc-a{right:28px;bottom:40px;background:rgba(232,163,61,.9)}' +
-      '.hc-d{right:150px;bottom:64px;width:80px;height:80px;background:rgba(111,183,214,.9)}' +
+      'text-align:center;white-space:pre;font:bold 15px Arial;color:#3a2a1a;user-select:none;touch-action:none;border:3px solid rgba(0,0,0,.3);pointer-events:auto}' +
+      '.hc-a{right:calc(28px + env(safe-area-inset-right));bottom:calc(44px + env(safe-area-inset-bottom));background:rgba(232,163,61,.92)}' +
+      '.hc-d{right:calc(150px + env(safe-area-inset-right));bottom:calc(68px + env(safe-area-inset-bottom));width:80px;height:80px;background:rgba(111,183,214,.92)}' +
       '.hc-pad.on{filter:brightness(1.2);transform:scale(.94)}';
     var s = document.createElement('style'); s.textContent = css; document.head.appendChild(s);
   }
