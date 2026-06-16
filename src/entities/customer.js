@@ -75,7 +75,8 @@ HC.Customer = function (scene, table, def, order, opts) {
   this._setOrderVisible(false);   // hide the order while walking in
 
   var self = this;
-  var dur = Phaser.Math.Clamp(Phaser.Math.Distance.Between(ent.x, ent.y, this.seatX, this.seatY) / 0.32, 600, 1100);
+  // amble in slowly (patience only starts once they sit, so this is free time)
+  var dur = Phaser.Math.Clamp(Phaser.Math.Distance.Between(ent.x, ent.y, this.seatX, this.seatY) / 0.13, 1600, 3000);
   this._walkTo(this.seatX, this.seatY, dur, function () { self._activate(); });
 };
 
