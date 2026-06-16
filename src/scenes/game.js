@@ -11,7 +11,8 @@ HC.GameScene.prototype.constructor = HC.GameScene;
 HC.GameScene.prototype.init = function (data) {
   this.numPlayers = (data && data.numPlayers) || 1;
   this.demo = !!(data && data.demo);     // CPU-vs-CPU attract mode
-  if (this.demo) this.numPlayers = 2;
+  this.online = (data && data.online) || null;   // 'host' for online co-op
+  if (this.demo || this.online) this.numPlayers = 2;
   // Phaser reuses the scene instance across restarts - reset per-run flags.
   this.ended = false;
 };
@@ -61,6 +62,14 @@ HC.GameScene.prototype.create = function () {
         color: '#fff4dd', backgroundColor: 'rgba(36,26,18,0.65)', padding: { x: 8, y: 3 }
       }).setOrigin(0.5, 1).setDepth(6001);
     this.tweens.add({ targets: badge, alpha: 0.55, duration: 900, yoyo: true, repeat: -1 });
+  }
+
+  if (this.online === 'host') {
+    this.add.text(HC.Config.WIDTH / 2, HC.Config.HEIGHT - 16,
+      '🌐  ONLINE CO-OP - you are Tony, your friend is Terrance', {
+        fontFamily: 'Arial', fontSize: '15px', fontStyle: 'bold',
+        color: '#fff4dd', backgroundColor: 'rgba(36,26,18,0.65)', padding: { x: 8, y: 3 }
+      }).setOrigin(0.5, 1).setDepth(6001);
   }
 
   // mute toggle
@@ -266,7 +275,8 @@ HC.GameScene.prototype._buildPlayers = function () {
   for (var i = 0; i < this.numPlayers; i++) {
     var p = new HC.Player(this, spawns[i][0], spawns[i][1], heroes[i], null);
     p.input = this.demo ? new HC.BotController(this, p, i)
-                        : new HC.InputController(this, schemes[i]);
+      : (this.online === 'host' && i === 1) ? new HC.NetInputController()
+        : new HC.InputController(this, schemes[i]);
     this.players.push(p);
     this.playerSprites.push(p.sprite);
   }

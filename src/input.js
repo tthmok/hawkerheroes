@@ -70,6 +70,19 @@ HC.InputController.prototype.sample = function () {
   return { x: mx, y: my, action: action, actionJust: actionJust, dash: dash, dashJust: dashJust };
 };
 
+// Online co-op: Player 2's input arrives over the network (HC.Net.guestInput).
+// Edge-detection (actionJust/dashJust) is computed locally from the held state.
+HC.NetInputController = function () { this._prevAction = false; this._prevDash = false; };
+HC.NetInputController.prototype.sample = function () {
+  var s = (window.HC.Net && window.HC.Net.guestInput) || { x: 0, y: 0, action: false, dash: false };
+  var action = !!s.action, dash = !!s.dash;
+  var actionJust = action && !this._prevAction;
+  var dashJust = dash && !this._prevDash;
+  this._prevAction = action;
+  this._prevDash = dash;
+  return { x: s.x || 0, y: s.y || 0, action: action, actionJust: actionJust, dash: dash, dashJust: dashJust };
+};
+
 // Build the keyboard key objects for a scene. Returns helper for schemes.
 HC.buildKeys = function (scene) {
   var KC = Phaser.Input.Keyboard.KeyCodes;
