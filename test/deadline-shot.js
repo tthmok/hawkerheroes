@@ -18,10 +18,12 @@ const { pathToFileURL } = require('url');
     // one deadline student with a big 4-dish order, plus a normal one
     let t = g.tables[0]; t.patience = 30000;
     t.customer = new HC.Customer(g, t, { name: 'Wei Ming', color: 0x4f8fc0, index: 0 }, g._makeOrder(4), { deadline: { name: 'CHI', waves: 3 } });
+    t.customer._activate();
     t = g.tables[3]; t.patience = 25000;
     t.customer = new HC.Customer(g, t, { name: 'Priya', color: 0xc94f8f, index: 1 }, g._makeOrder(2), {});
+    t.customer._activate();
   });
-  await new Promise(r => setTimeout(r, 500));
+  await new Promise(r => setTimeout(r, 900));
   await page.screenshot({ path: path.join(__dirname, 'shot-deadline.png') });
   await browser.close();
   console.log('captured shot-deadline.png');

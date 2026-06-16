@@ -87,6 +87,7 @@ const { pathToFileURL } = require('url');
       t.patience = 20000;
       const cust = new HC.Customer(g, t, { name: 'Tester', color: 0xffffff, index: 0 }, ['chickenrice']);
       t.customer = cust;
+      cust._activate();                    // skip the walk-in for the test
       window.__deliverTable = g.tables.indexOf(t);
 
       const p = g.players[0];
@@ -109,6 +110,7 @@ const { pathToFileURL } = require('url');
       const t2 = g.tables.find(tt => !tt.customer);
       const c2 = new HC.Customer(g, t2, { name: 'Angry', color: 0xff0000, index: 1 }, ['laksa']);
       t2.patience = 20000; t2.customer = c2;
+      c2._activate();
       window.__angryTable = g.tables.indexOf(t2);
       g._customerAngry(t2);
       out.comboReset = (g.state.combo === 1);
@@ -122,8 +124,8 @@ const { pathToFileURL } = require('url');
 
     await page.screenshot({ path: path.join(__dirname, 'shot-game.png') });
 
-    // the served / angry tables must free once their exit animation finishes
-    await new Promise(r => setTimeout(r, 700));
+    // the served / angry tables must free once the student has walked out
+    await new Promise(r => setTimeout(r, 1300));
     const tablesFreedAfterExit = await page.evaluate(() => {
       const g = window.HC.game.scene.getScene('Game');
       return g.tables[window.__deliverTable].customer === null &&

@@ -35,10 +35,19 @@ HC.GameScene.prototype.create = function () {
   this._buildTrash();
   this._buildSink();
   this._buildKopiBar();
+  this._buildEntrance();
   this._buildPlayers();
+
+  // ambient patrons (moving obstacles)
+  this.npcGroup = this.physics.add.group();
+  this.npcs = [];
+  this.nextNpcAt = 0;
 
   // collisions
   this.physics.add.collider(this.playerSprites, this.solids);
+  this.physics.add.collider(this.playerSprites, this.npcGroup);
+  this.physics.add.collider(this.npcGroup, this.solids);
+  this.physics.add.collider(this.npcGroup, this.npcGroup);
   if (this.playerSprites.length > 1) {
     this.physics.add.collider(this.playerSprites[0], this.playerSprites[1]);
   }
@@ -214,6 +223,25 @@ HC.GameScene.prototype._drawSink = function () {
   this.sinkCount.setVisible(d > 0).setText('🍽 ' + d + ' dirty');
 };
 
+HC.GameScene.prototype._buildEntrance = function () {
+  var P = HC.Config.PLAY;
+  this.entrance = { x: 470, y: P.y2 + 14 };
+  var g = this.add.graphics().setDepth(1);
+  g.fillStyle(0xcaa572, 1); g.fillRoundedRect(this.entrance.x - 48, P.y2 - 20, 96, 22, 6);
+  g.fillStyle(0xb98f57, 1); g.fillRoundedRect(this.entrance.x - 42, P.y2 - 16, 84, 14, 4);
+  this.add.text(this.entrance.x, P.y2 - 9, 'ENTRANCE', {
+    fontFamily: 'Arial', fontSize: '11px', fontStyle: 'bold', color: '#5a4630'
+  }).setOrigin(0.5).setDepth(2);
+};
+
+HC.GameScene.prototype._maybeSpawnNpc = function (time) {
+  if (this.npcs.length >= 3 || time < this.nextNpcAt) return;
+  var npc = new HC.Npc(this, this.entrance.x, HC.Config.PLAY.y2 - 8);
+  this.npcGroup.add(npc.sprite);
+  this.npcs.push(npc);
+  this.nextNpcAt = time + Phaser.Math.Between(2600, 5200);
+};
+
 HC.GameScene.prototype._buildPlayers = function () {
   var KC = HC.buildKeys(this);
   var schemes;
@@ -274,9 +302,13 @@ HC.GameScene.prototype._startCountdown = function () {
 HC.GameScene.prototype.update = function (time, delta) {
   var dt = delta;
 
-  // players can move during the countdown but freeze once the round ends
+  // players + patrons move during the countdown but freeze once the round ends
   if (!this.ended) {
     for (var i = 0; i < this.players.length; i++) this.players[i].update(dt, time);
+    for (var n = this.npcs.length - 1; n >= 0; n--) {
+      this.npcs[n].update(dt, time);
+      if (this.npcs[n].dead) { this.npcs[n].destroy(); this.npcs.splice(n, 1); }
+    }
   }
 
   if (this.state.running) {
@@ -292,6 +324,7 @@ HC.GameScene.prototype.update = function (time, delta) {
       this._handleSpawning(time);
       this._updateCustomers(dt, time);
       this._handleInteractions(time, dt);
+      this._maybeSpawnNpc(time);
     }
   }
 
@@ -596,6 +629,7 @@ HC.GameScene.prototype._endRound = function () {
   for (var i = 0; i < this.players.length; i++) {
     this.players[i].sprite.setVelocity(0, 0);
   }
+  for (var n = 0; n < this.npcs.length; n++) this.npcs[n].sprite.setVelocity(0, 0);
 
   var big = this.add.text(HC.Config.WIDTH / 2, HC.Config.HEIGHT / 2, "TIME'S UP!", {
     fontFamily: 'Arial', fontSize: '80px', fontStyle: 'bold',

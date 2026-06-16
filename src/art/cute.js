@@ -732,7 +732,8 @@ window.HC = window.HC || {};
           hairStyle: 'short',
           hair: P.blackHair,
           skin: P.skin0,
-          glasses: false,
+          glasses: true,
+          blackRim: true,
           bigSmile: true,
           apron: false,        // show the black shirt
           shorts: 'khaki'

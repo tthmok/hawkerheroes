@@ -37,7 +37,7 @@ const { pathToFileURL } = require('url');
       if (t.customer) { t.customer.leave(true); t.customer = null; }
       t.patience = 30000;
       const cust = new HC.Customer(g, t, { name: 'A', color: 0xfff, index: 0 }, ['kopiC'], {});
-      t.customer = cust;
+      t.customer = cust; cust._activate();
       const p = g.players[0]; p.clearHands();
       p.addDish('cup_c');
       p.upgradeHeld('cup_c', D.cupAdd('cup_c', 'milk'));
@@ -51,7 +51,7 @@ const { pathToFileURL } = require('url');
       // wrong kopi rejected: a 'kopi' (cup_cm) handed to a 'kopiO' order
       const t2 = g.tables.find(tt => !tt.customer);
       const c2 = new HC.Customer(g, t2, { name: 'B', color: 0xfff, index: 1 }, ['kopiO'], {});
-      t2.patience = 30000; t2.customer = c2;
+      t2.patience = 30000; t2.customer = c2; c2._activate();
       p.clearHands(); p.addDish('cup_cm');
       g._tryDeliver(p, c2, g.time.now);
       r.wrongRejected = !c2.isComplete() && p.held.length === 1;

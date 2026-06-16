@@ -31,7 +31,7 @@ const { pathToFileURL } = require('url');
       t.patience = 30000;
       const cust = new HC.Customer(g, t, { name: 'Deadliner', color: 0xffffff, index: 0 },
         ['chickenrice'], { deadline: { name: 'CHI', waves: 2 } });
-      t.customer = cust; window.__t = g.tables.indexOf(t);
+      t.customer = cust; cust._activate(); window.__t = g.tables.indexOf(t);
       const p = g.players[0]; p.clearHands(); p.addDish('chickenrice');
       const papersBefore = g.stats.papers;
       g._tryDeliver(p, cust, g.time.now);   // completes wave 1 -> should rest + schedule reorder
@@ -51,7 +51,7 @@ const { pathToFileURL } = require('url');
       return { reordered, reorderedOrderLen: cust ? cust.order.length : 0, papersAfter: g.stats.papers };
     });
 
-    await new Promise(r => setTimeout(r, 600));  // let the leave animation free the table
+    await new Promise(r => setTimeout(r, 1300));  // let the student walk out + free the table
 
     const step3 = await page.evaluate(() => {
       const g = window.HC.game.scene.getScene('Game');

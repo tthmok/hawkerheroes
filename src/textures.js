@@ -196,7 +196,7 @@ HC.Textures = {
   _heroes: function (scene) {
     var W = 58, H = 66;
     var g = this.gfx(scene);
-    this._drawChar(g, W, H, { shirt: 0x2c2c31, style: 'short', hair: 0x19130f, glasses: false, apron: false });
+    this._drawChar(g, W, H, { shirt: 0x2c2c31, style: 'short', hair: 0x19130f, glasses: true, apron: false });
     g.generateTexture('tony', W, H); g.destroy();
 
     g = this.gfx(scene);
