@@ -85,7 +85,7 @@ HC.Data = {
   // Real RICELab folks (Prof. Tony Tang's students / lab members). Terrance is
   // a playable hero, not in this pool.
   gradStudents: [
-    'Kody', 'Shanna', 'Tianyi', 'Emily', 'Colin', 'Neal', 'Satara', 'Bon',
+    'Kody', 'Shanna', 'Tianyi', 'Emily', 'Colin', 'Neal', 'Setareh', 'Bon',
     'Elias', 'Warren', 'Alex', 'Pei-Hua', 'Keiichi', 'Yuki', 'Martin', 'Sasha',
     'Wei Bin', 'Allyne', 'Whey Yinn', 'Justin', 'Hai Dang', 'Amy', 'Leo', 'Ava',
     'Karthik', 'Sydney', 'Andrey', 'Brennan', 'Jessi', 'Flavia', 'William',
