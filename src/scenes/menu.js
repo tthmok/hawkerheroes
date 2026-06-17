@@ -42,12 +42,12 @@ HC.MenuScene.prototype.create = function () {
   }).setOrigin(0.5);
 
   // hero portraits
-  this.add.image(W / 2 - 250, 250, 'tony').setScale(2.4);
-  this.add.text(W / 2 - 250, 330, 'Tony\nThe Professor', {
+  this.add.image(W / 2 - 250, 248, 'tony').setScale(2.4);
+  this.add.text(W / 2 - 250, 360, 'Tony\nThe Professor', {
     fontFamily: 'Arial', fontSize: '17px', fontStyle: 'bold', color: '#3a2a1a', align: 'center'
   }).setOrigin(0.5);
-  this.add.image(W / 2 + 250, 250, 'terrance').setScale(2.4);
-  this.add.text(W / 2 + 250, 330, 'Terrance\nThe Protégé', {
+  this.add.image(W / 2 + 250, 248, 'terrance').setScale(2.4);
+  this.add.text(W / 2 + 250, 360, 'Terrance\nThe Protégé', {
     fontFamily: 'Arial', fontSize: '17px', fontStyle: 'bold', color: '#3a2a1a', align: 'center'
   }).setOrigin(0.5);
 
