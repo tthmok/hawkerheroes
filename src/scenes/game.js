@@ -158,9 +158,12 @@ HC.GameScene.prototype._buildTables = function () {
   this.tables = [];
   for (var i = 0; i < spots.length; i++) {
     var tx = spots[i][0], ty = spots[i][1];
-    // a round seat on the left and right; the student takes one (1 per table)
-    this.add.image(tx - DX, ty + 12, 'stool').setDepth(ty + 10);
-    this.add.image(tx + DX, ty + 12, 'stool').setDepth(ty + 10);
+    // a round seat on the left and right; the student takes one (1 per table).
+    // Depth sits just below the seat line (ty - 6) so the student renders in
+    // FRONT of the stool whether they're seated (ty + 34) or still walking in
+    // (depth = their y, down to ~ty - 6 at the seat).
+    this.add.image(tx - DX, ty + 12, 'stool').setDepth(ty - 12);
+    this.add.image(tx + DX, ty + 12, 'stool').setDepth(ty - 12);
     this.add.image(tx, ty, 'table').setDepth(ty);
     this._addSolid(tx, ty + 2, 60, 46);
     this.tables.push({
