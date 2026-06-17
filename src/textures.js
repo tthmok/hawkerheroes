@@ -209,11 +209,10 @@ HC.Textures = {
     var styles = ['short', 'bun', 'long', 'bald', 'short', 'long', 'bun', 'short', 'cap', 'short'];
     var hairs = [0x2a1d14, 0x3a2a1a, 0x110d0a, 0x4a3420, 0x5a3a1a, 0x222018, 0x2a1d14, 0x3a2a1a, 0x1a1410, 0x40301c];
     var skins = [0xf3c79a, 0xe8b58a, 0xd9a06a, 0xc88a52, 0xf6d3b0, 0xe0a878, 0xf3c79a, 0xd9a06a, 0xe8b58a, 0xc88a52];
-    for (var i = 0; i < HC.Data.gradStudents.length; i++) {
-      var s = HC.Data.gradStudents[i];
+    for (var i = 0; i < HC.Data.studentTexCount; i++) {
       var g = this.gfx(scene);
       this._drawChar(g, W, H, {
-        shirt: s.color,
+        shirt: HC.Data.studentShirts[i % HC.Data.studentShirts.length],
         style: styles[i % styles.length],
         hair: hairs[i % hairs.length],
         skin: skins[i % skins.length],

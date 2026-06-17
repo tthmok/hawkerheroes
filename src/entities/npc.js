@@ -7,7 +7,7 @@ window.HC = window.HC || {};
 
 HC.Npc = function (scene, x, y) {
   this.scene = scene;
-  var idx = Phaser.Math.Between(0, HC.Data.gradStudents.length - 1);
+  var idx = Phaser.Math.Between(0, HC.Data.studentTexCount - 1);
   this.si = idx;                  // student texture index (for online snapshots)
   var sp = scene.physics.add.sprite(x, y, 'student_' + idx).setScale(0.82);
   sp.body.setSize(30, 22);

@@ -465,16 +465,23 @@ HC.GameScene.prototype._spawnCustomer = function (table) {
   table.patience = patience;
   var order = this._makeOrder(size);
 
-  // pick a grad student not currently seated (fall back to any)
-  var seated = {};
-  this.tables.forEach(function (t) { if (t.customer) seated[t.customer.def.index] = true; });
-  var pool = [];
-  for (var i = 0; i < HC.Data.gradStudents.length; i++) if (!seated[i]) pool.push(i);
-  if (pool.length === 0) for (var j = 0; j < HC.Data.gradStudents.length; j++) pool.push(j);
-  var idx = Phaser.Utils.Array.GetRandom(pool);
-  var def = { name: HC.Data.gradStudents[idx].name, color: HC.Data.gradStudents[idx].color, index: idx };
+  // pick a name not currently seated (fall back to any)
+  var seatedName = {};
+  this.tables.forEach(function (t) { if (t.customer) seatedName[t.customer.def.name] = true; });
+  var names = HC.Data.gradStudents.filter(function (n) { return !seatedName[n]; });
+  if (names.length === 0) names = HC.Data.gradStudents;
+  var name = Phaser.Utils.Array.GetRandom(names);
 
-  table.customer = new HC.Customer(this, table, def, order, opts);
+  // pick a sprite look (student_<index>) not currently seated, so the visible
+  // students still look distinct even though the name pool is much larger
+  var seatedTex = {};
+  this.tables.forEach(function (t) { if (t.customer) seatedTex[t.customer.def.index] = true; });
+  var texPool = [];
+  for (var i = 0; i < HC.Data.studentTexCount; i++) if (!seatedTex[i]) texPool.push(i);
+  if (texPool.length === 0) for (var j = 0; j < HC.Data.studentTexCount; j++) texPool.push(j);
+  var idx = Phaser.Utils.Array.GetRandom(texPool);
+
+  table.customer = new HC.Customer(this, table, { name: name, index: idx }, order, opts);
 };
 
 HC.GameScene.prototype._updateCustomers = function (dt, time) {

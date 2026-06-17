@@ -74,18 +74,27 @@ HC.Data = {
     return id;
   },
 
-  // Hungry grad students. Each gets a distinct shirt colour + texture.
+  // Hungry grad students. Appearances and names are decoupled: there are
+  // studentTexCount sprite looks (student_0..N-1, one shirt colour each), while
+  // the name pool can be much larger - a customer picks a look AND a name.
+  studentTexCount: 10,
+  studentShirts: [
+    0x4f8fc0, 0xc94f8f, 0x57a05a, 0xe0913a, 0x8e6cc0,
+    0xd64f6a, 0x3fb0a8, 0xc7a83a, 0x6f7bd6, 0xd66f3f
+  ],
+  // Real RICELab folks (Prof. Tony Tang's students / lab members). Terrance is
+  // a playable hero, not in this pool.
   gradStudents: [
-    { name: 'Wei Ming', color: 0x4f8fc0 },
-    { name: 'Priya',    color: 0xc94f8f },
-    { name: 'Hiroshi',  color: 0x57a05a },
-    { name: 'Sofia',    color: 0xe0913a },
-    { name: 'Kwame',    color: 0x8e6cc0 },
-    { name: 'Mei Ling', color: 0xd64f6a },
-    { name: 'Diego',    color: 0x3fb0a8 },
-    { name: 'Aisha',    color: 0xc7a83a },
-    { name: 'Lars',     color: 0x6f7bd6 },
-    { name: 'Nadia',    color: 0xd66f3f }
+    'Kody', 'Shanna', 'Tianyi', 'Emily', 'Colin', 'Neal', 'Satara', 'Bon',
+    'Elias', 'Warren', 'Alex', 'Pei-Hua', 'Keiichi', 'Yuki', 'Martin', 'Sasha',
+    'Wei Bin', 'Allyne', 'Whey Yinn', 'Justin', 'Hai Dang', 'Amy', 'Leo', 'Ava',
+    'Karthik', 'Sydney', 'Andrey', 'Brennan', 'Jessi', 'Flavia', 'William',
+    'Teddy', 'Hesam', 'Omid', 'Anna', 'Lisa', 'Richard', 'Waliur', 'Rojin',
+    'Matthew', 'Maayan', 'Haley', 'Frederico', 'Kartikaeya', 'Ruijia',
+    'Taamannae', 'Audrey', 'Kirk', 'Jessica', 'Tran', 'Ore', 'Tina',
+    'Christopher', 'Hannah', 'Kevin', 'Peter', 'Josh', 'Michael', 'Constantine',
+    'Nolan', 'Ksenia', 'Riane', 'Stephen', 'Anthony', 'Shaheed', 'Lamess',
+    'Laurensia'
   ],
 
   // The two playable heroes.
