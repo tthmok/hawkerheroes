@@ -71,11 +71,11 @@ HC.GameScene.prototype.create = function () {
   this.hud = new HC.Hud(this);
 
   if (this.demo) {
-    var badge = this.add.text(HC.Config.WIDTH / 2, HC.Config.HEIGHT - 16,
+    var badge = this.add.text(HC.Config.WIDTH / 2, 54,
       '👀  CPU DEMO - Tony & Terrance are playing themselves', {
         fontFamily: 'Arial', fontSize: '15px', fontStyle: 'bold',
         color: '#fff4dd', backgroundColor: 'rgba(36,26,18,0.65)', padding: { x: 8, y: 3 }
-      }).setOrigin(0.5, 1).setDepth(6001);
+      }).setOrigin(0.5, 0).setDepth(6001);
     this.tweens.add({ targets: badge, alpha: 0.55, duration: 900, yoyo: true, repeat: -1 });
   }
 
