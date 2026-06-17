@@ -21,6 +21,12 @@ HC.GameScene.prototype.create = function () {
   var C = HC.Config, P = C.PLAY;
   HC.Audio.init();
 
+  // gentle background chiptune for the round (stops when we leave the scene)
+  if (window.HC.Music) {
+    window.HC.Music.start();
+    this.events.once('shutdown', function () { if (window.HC.Music) window.HC.Music.stop(); });
+  }
+
   this.state = { score: 0, streak: 0, combo: 1, timeLeft: C.ROUND_TIME, running: false };
   this.stats = { served: 0, angry: 0, bestStreak: 0, papers: 0 };
   this.kitchen = { clean: C.KITCHEN.PLATES, dirty: 0 };  // plates are conserved
