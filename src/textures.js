@@ -375,9 +375,10 @@ HC.Textures = {
         g.fillRect(ax + s3 * sw, ay - 18, sw, 18);
       }
 
-      // sign board (where the dish icon will sit)
-      g.fillStyle(0xfdf6e6, 1); g.fillRoundedRect(cx - 26, ay + 14, 52, 34, 8);
-      g.lineStyle(3, this.shade(st.awning, 0.8), 1); g.strokeRoundedRect(cx - 26, ay + 14, 52, 34, 8);
+      // sign board (raised up onto the awning - the dish rests here, freeing the
+      // middle of the stall as an open service window for the auntie/uncle)
+      g.fillStyle(0xfdf6e6, 1); g.fillRoundedRect(cx - 26, ay - 16, 52, 34, 8);
+      g.lineStyle(3, this.shade(st.awning, 0.8), 1); g.strokeRoundedRect(cx - 26, ay - 16, 52, 34, 8);
 
       g.generateTexture('stall_' + st.id, W, H); g.destroy();
     }

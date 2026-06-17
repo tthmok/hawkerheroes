@@ -16,14 +16,16 @@ HC.Stall = function (scene, x, y, def) {
 
   var d = y;
   this.image = scene.add.image(x, y, 'stall_' + def.id).setDepth(d);
-  // the stall's auntie / uncle, standing at the counter (head clear of the sign)
-  this.vendor = scene.add.image(x, y + 28, 'vendor_' + def.id).setScale(0.92).setDepth(d + 0.4);
+  // the stall's auntie / uncle, standing in the service window BEHIND the stall
+  // (depth d-1) so the counter hides their legs/body and only the head + upper
+  // torso peek over the counter.
+  this.vendor = scene.add.image(x, y + 6, 'vendor_' + def.id).setScale(0.92).setDepth(d - 1);
   // they occasionally shuffle left/right behind the counter (see _paceVendor)
   this._vendorHome = x;
   this._paceUntil = 0;
   this._paceStart = 0; this._paceAmp = 0; this._pacePeriod = 900;
   this._nextPaceAt = scene.time.now + Phaser.Math.Between(800, 4500);
-  this.icon = scene.add.image(x, y - 6, def.tex).setDepth(d + 1).setScale(0.74);
+  this.icon = scene.add.image(x, y - 36, def.tex).setDepth(d + 1).setScale(0.74);
   this.label = scene.add.text(x, y + 60, def.name, {
     fontFamily: 'Arial', fontSize: '15px', fontStyle: 'bold',
     color: '#3a2a1a', backgroundColor: '#f7edd8',
