@@ -16,6 +16,8 @@ HC.Stall = function (scene, x, y, def) {
 
   var d = y;
   this.image = scene.add.image(x, y, 'stall_' + def.id).setDepth(d);
+  // the stall's auntie / uncle, standing at the counter (head clear of the sign)
+  this.vendor = scene.add.image(x, y + 28, 'vendor_' + def.id).setScale(0.92).setDepth(d + 0.4);
   this.icon = scene.add.image(x, y - 6, def.tex).setDepth(d + 1).setScale(0.74);
   this.label = scene.add.text(x, y + 60, def.name, {
     fontFamily: 'Arial', fontSize: '15px', fontStyle: 'bold',

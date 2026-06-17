@@ -21,6 +21,7 @@ HC.Textures = {
   generateAll: function (scene) {
     this._heroes(scene);
     this._students(scene);
+    this._vendors(scene);
     this._dishes(scene);
     this._stalls(scene);
     this._props(scene);
@@ -220,6 +221,23 @@ HC.Textures = {
         cap: 0x444a55
       });
       g.generateTexture('student_' + i, W, H); g.destroy();
+    }
+  },
+
+  // A unique auntie / uncle hawker for each stall (vendor_<stallId>).
+  _vendors: function (scene) {
+    var W = 58, H = 66;
+    var V = [
+      { id: 'chickenrice', skin: 0xf3c79a, shirt: 0x6fa0d0, style: 'greyside', glasses: true,  apron: true },                 // greying uncle, glasses
+      { id: 'ckt',         skin: 0xd9a06a, shirt: 0x9c4f4f, style: 'bun',  hair: 0x4a4038, glasses: false, apron: true },     // auntie, bun
+      { id: 'laksa',       skin: 0xe8b58a, shirt: 0xd06aa0, style: 'long', hair: 0x3a322c, glasses: true,  apron: true },     // auntie, long hair, glasses
+      { id: 'satay',       skin: 0xc88a52, shirt: 0x8a6a32, style: 'cap',  cap: 0xb5532e, glasses: false, apron: true },      // capped uncle
+      { id: 'prata',       skin: 0xb5774a, shirt: 0xcab48a, style: 'bald', glasses: false, apron: true }                      // bald uncle
+    ];
+    for (var i = 0; i < V.length; i++) {
+      var g = this.gfx(scene);
+      this._drawChar(g, W, H, V[i]);
+      g.generateTexture('vendor_' + V[i].id, W, H); g.destroy();
     }
   },
 
