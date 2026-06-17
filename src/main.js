@@ -4,7 +4,14 @@
 (function () {
   var C = HC.Config;
   var config = {
-    type: Phaser.AUTO,
+    // Canvas (not AUTO/WebGL) on purpose: this game generates EVERY texture
+    // procedurally at boot (generateTexture / addCanvas / base64 sprites), which
+    // have no reloadable source. Mobile browsers discard the WebGL context when
+    // you switch apps, and Phaser can't rebuild source-less GPU textures on
+    // restore -> black screen on return. The Canvas 2D renderer has no GPU
+    // context to lose (it redraws each frame from the in-memory sources), so it
+    // survives backgrounding. The game is light, so Canvas perf is fine.
+    type: Phaser.CANVAS,
     width: C.WIDTH,
     height: C.HEIGHT,
     backgroundColor: '#e9d9b8',
@@ -26,6 +33,23 @@
   };
 
   window.HC.game = new Phaser.Game(config);
+
+  // Returning from the background on mobile: make sure the render loop is awake
+  // and the audio context (which suspends while backgrounded) resumes, so the
+  // game and music pick back up without needing a tap.
+  function onResume() {
+    var g = window.HC.game;
+    try { if (g && g.loop && g.loop.running === false && g.loop.wake) g.loop.wake(); } catch (e) {}
+    try {
+      var ctx = window.HC.Audio && window.HC.Audio.ctx;
+      if (ctx && ctx.state === 'suspended') ctx.resume();
+    } catch (e) {}
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') onResume();
+  });
+  window.addEventListener('pageshow', onResume);
+  window.addEventListener('focus', onResume);
 
   // Phones report 100vh as the *large* viewport (taller than what's actually
   // visible behind the browser/system bars), which would push the top & bottom
