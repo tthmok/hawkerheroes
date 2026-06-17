@@ -20,11 +20,13 @@ HC.Stall = function (scene, x, y, def) {
   // (depth d-1) so the counter hides their legs/body and only the head + upper
   // torso peek over the counter.
   this.vendor = scene.add.image(x, y + 6, 'vendor_' + def.id).setScale(0.92).setDepth(d - 1);
-  // they occasionally shuffle left/right behind the counter (see _paceVendor)
-  this._vendorHome = x;
-  this._paceUntil = 0;
-  this._paceStart = 0; this._paceAmp = 0; this._pacePeriod = 900;
-  this._nextPaceAt = scene.time.now + Phaser.Math.Between(800, 4500);
+  // they occasionally dawdle left/right and, separately, bob up/down (_paceVendor)
+  this._vendorHome = this.vendor.x;
+  this._vendorHomeY = this.vendor.y;
+  this._paceUntil = 0; this._paceStart = 0; this._paceAmp = 0; this._pacePeriod = 2800;
+  this._nextPaceAt = scene.time.now + Phaser.Math.Between(900, 5000);
+  this._bobUntil = 0; this._bobStart = 0; this._bobAmp = 0; this._bobPeriod = 1100;
+  this._nextBobAt = scene.time.now + Phaser.Math.Between(1800, 7000);
   this.icon = scene.add.image(x, y - 36, def.tex).setDepth(d + 1).setScale(0.74);
   this.label = scene.add.text(x, y + 60, def.name, {
     fontFamily: 'Arial', fontSize: '15px', fontStyle: 'bold',
@@ -75,11 +77,14 @@ HC.Stall.prototype.update = function (time) {
   this._paceVendor(time);
 };
 
-// Occasional back-and-forth shuffle behind the counter: a smooth sine sway
-// around the home x for a few cycles, then a pause before the next one.
+// Idle life behind the counter: a slow, dawdling left/right sway and a
+// separate, occasional up/down bob - each a smooth sine for a few cycles, then
+// a pause. The two run on independent timers so they overlap naturally.
 HC.Stall.prototype._paceVendor = function (time) {
   var v = this.vendor;
   if (!v) return;
+
+  // horizontal dawdle (slow back-and-forth)
   if (time < this._paceUntil) {
     var ph = (time - this._paceStart) / this._pacePeriod * Math.PI * 2;
     v.x = this._vendorHome + Math.sin(ph) * this._paceAmp;
@@ -87,11 +92,27 @@ HC.Stall.prototype._paceVendor = function (time) {
     if (v.x !== this._vendorHome) v.x = this._vendorHome;     // settle exactly home
     if (time >= this._nextPaceAt) {
       this._paceStart = time;
-      this._paceAmp = Phaser.Math.Between(9, 16);
-      this._pacePeriod = Phaser.Math.Between(750, 1150);
-      var cycles = Phaser.Math.Between(1, 3);                  // how many back-and-forths
+      this._paceAmp = Phaser.Math.Between(8, 15);
+      this._pacePeriod = Phaser.Math.Between(2400, 3600);     // dawdling - one slow sweep
+      var cycles = Phaser.Math.Between(1, 2);
       this._paceUntil = time + cycles * this._pacePeriod;
-      this._nextPaceAt = this._paceUntil + Phaser.Math.Between(2500, 8000);
+      this._nextPaceAt = this._paceUntil + Phaser.Math.Between(2500, 7500);
+    }
+  }
+
+  // occasional up/down bob
+  if (time < this._bobUntil) {
+    var bp = (time - this._bobStart) / this._bobPeriod * Math.PI * 2;
+    v.y = this._vendorHomeY + Math.sin(bp) * this._bobAmp;
+  } else {
+    if (v.y !== this._vendorHomeY) v.y = this._vendorHomeY;
+    if (time >= this._nextBobAt) {
+      this._bobStart = time;
+      this._bobAmp = Phaser.Math.Between(4, 6);
+      this._bobPeriod = Phaser.Math.Between(950, 1350);
+      var bobs = Phaser.Math.Between(2, 3);
+      this._bobUntil = time + bobs * this._bobPeriod;
+      this._nextBobAt = this._bobUntil + Phaser.Math.Between(3500, 9000);
     }
   }
 };
