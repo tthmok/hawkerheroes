@@ -12,7 +12,7 @@ HC.Audio = {
   master: null,
   muted: false,
   ok: true,
-  sfxLevel: 0.83,       // global SFX gain multiplier (-17% vs music)
+  sfxLevel: 0.71,       // global SFX gain multiplier (0.83 * 0.85, another -15%)
   buffers: null,        // key -> AudioBuffer (filled in as they decode)
   _sfxStarted: false,
 
