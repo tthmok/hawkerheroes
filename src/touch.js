@@ -20,10 +20,12 @@
     visible: false,
     _armed: false,         // a local game currently wants controls
     _built: false,
+    _lastCdDeg: -1,        // last-rendered dash-cooldown sweep angle
     arm: function () { this._armed = true; },
     disarm: function () { this._armed = false; zeroState(); },
     show: show,
-    hide: hide
+    hide: hide,
+    setDashCooldown: setDashCooldown
   };
 
   function detect() {
@@ -52,14 +54,17 @@
     var stick = el('div', 'hc-stick'); var knob = el('div', 'hc-knob');
     stick.appendChild(knob); wrap.appendChild(stick);
     var aBtn = el('div', 'hc-pad hc-a', 'COOK /\nSERVE');
-    var dBtn = el('div', 'hc-pad hc-d', 'DASH');
+    var dBtn = el('div', 'hc-pad hc-d');
+    var dashCd = el('div', 'hc-cd');                 // radial cooldown sweep overlay
+    dBtn.appendChild(dashCd);
+    dBtn.appendChild(el('span', 'hc-lbl', 'DASH'));
     wrap.appendChild(aBtn); wrap.appendChild(dBtn);
     wrap.style.display = 'none';
     document.body.appendChild(wrap);
     wireStick(stick, knob);
     wireButton(aBtn, 'action');
     wireButton(dBtn, 'dash');
-    dom = { wrap: wrap, knob: knob };
+    dom = { wrap: wrap, knob: knob, dashCd: dashCd };
     Touch._built = true;
   }
 
@@ -83,11 +88,27 @@
     if (dom) {
       dom.wrap.style.display = 'none';
       if (dom.knob) dom.knob.style.transform = 'translate(0,0)';
+      if (dom.dashCd) dom.dashCd.style.opacity = '0';
     }
     Touch.visible = false;
+    Touch._lastCdDeg = -1;
     zeroState();
     var ob = document.querySelector('.hh-online-btn');
     if (ob && !onlineSessionActive()) ob.style.display = '';   // back to the menu default
+  }
+
+  // Reflect the dash cooldown on the DASH button as a depleting dark pie:
+  // frac = remaining/total (1 just after a dash, 0 when ready again).
+  function setDashCooldown(frac) {
+    if (!dom || !dom.dashCd) return;
+    frac = frac > 1 ? 1 : (frac < 0 ? 0 : frac);
+    var deg = (frac * 360) | 0;
+    if (deg === Touch._lastCdDeg) return;       // skip redundant writes (called every frame)
+    Touch._lastCdDeg = deg;
+    if (deg <= 0) { dom.dashCd.style.opacity = '0'; return; }
+    dom.dashCd.style.opacity = '1';
+    dom.dashCd.style.background =
+      'conic-gradient(rgba(18,10,6,.5) ' + deg + 'deg, rgba(0,0,0,0) ' + deg + 'deg)';
   }
 
   // ---- input wiring (writes the shared `state`) ----
@@ -149,6 +170,8 @@
       'text-align:center;white-space:pre;font:bold 11px Arial;color:#3a2a1a;user-select:none;touch-action:none;border:3px solid rgba(0,0,0,.3);pointer-events:auto}' +
       '.hc-a{right:calc(24px + env(safe-area-inset-right));bottom:calc(36px + env(safe-area-inset-bottom));background:rgba(232,163,61,.92)}' +
       '.hc-d{right:calc(100px + env(safe-area-inset-right));bottom:calc(52px + env(safe-area-inset-bottom));width:50px;height:50px;background:rgba(111,183,214,.92)}' +
+      '.hc-cd{position:absolute;inset:0;border-radius:50%;pointer-events:none;opacity:0;transition:opacity .12s;z-index:0}' +
+      '.hc-lbl{position:relative;z-index:1;pointer-events:none}' +
       '.hc-pad.on{filter:brightness(1.2);transform:scale(.94)}';
     var s = document.createElement('style'); s.textContent = css; document.head.appendChild(s);
   }

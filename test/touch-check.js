@@ -72,7 +72,17 @@ function pointerWindow(type, x, y) {
     out.overlay = await page.evaluate(() => {
       const stick = document.querySelector('.hc-stick'), a = document.querySelector('.hc-a'), d = document.querySelector('.hc-d');
       const wrap = document.querySelector('.hc-pad-wrap');
-      return { stick: !!stick, aBtn: !!a, dBtn: !!d, visible: !!(wrap && wrap.style.display !== 'none'), touchVisible: !!window.HC.Touch.visible };
+      return { stick: !!stick, aBtn: !!a, dBtn: !!d, cd: !!document.querySelector('.hc-cd'),
+        visible: !!(wrap && wrap.style.display !== 'none'), touchVisible: !!window.HC.Touch.visible };
+    });
+
+    // 3b) the DASH cooldown indicator: the API shows a sweep and clears at 0
+    out.dashCd = await page.evaluate(() => {
+      var el = document.querySelector('.hc-cd');
+      window.HC.Touch.setDashCooldown(0.5);
+      var on = { op: el.style.opacity, sweep: /conic-gradient/.test(el.style.background) };
+      window.HC.Touch.setDashCooldown(0);
+      return { onOpacity: on.op, hasSweep: on.sweep, offOpacity: el.style.opacity };
     });
 
     // 4) drive the DOM joystick to the right -> HC.Touch.state.x > 0 -> player moves right
@@ -155,7 +165,8 @@ function pointerWindow(type, x, y) {
     out.errors = errors; out.warnings = warnings;
     console.log(JSON.stringify(out, null, 2));
     const pass = out.touchEnabled && out.viewportFit.fits && out.startZoneIsInteractive && out.startedViaTap &&
-      out.overlay.stick && out.overlay.aBtn && out.overlay.dBtn && out.overlay.visible &&
+      out.overlay.stick && out.overlay.aBtn && out.overlay.dBtn && out.overlay.cd && out.overlay.visible &&
+      out.dashCd.onOpacity === '1' && out.dashCd.hasSweep && out.dashCd.offOpacity === '0' &&
       out.stateXAfterStickRight > 0 && out.playerMovedRight && out.stateXAfterRelease === 0 &&
       out.actionDown && out.dashDown && out.actionAfterAUp === false &&
       out.stateXWhileHeld > 0 && out.overlayHiddenOnMenu &&

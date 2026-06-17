@@ -375,6 +375,11 @@ HC.GameScene.prototype.update = function (time, delta) {
   this._drawSink();
   this.hud.update(this.state, this.players, this.kitchen);
 
+  // reflect P1's dash cooldown on the on-screen DASH button (touch play)
+  if (window.HC.Touch && window.HC.Touch.visible && this.players[0]) {
+    window.HC.Touch.setDashCooldown((this.players[0].dashCDUntil - time) / HC.Config.DASH_COOLDOWN);
+  }
+
   // host: broadcast a state snapshot to the guest (~20 Hz)
   if (this.online === 'host' && window.HC.Net && window.HC.Net.sendState) {
     this._netAccum = (this._netAccum || 0) + dt;

@@ -30,10 +30,10 @@ HC.Config = {
   ROUND_TIME: 120000,    // ms (2 minutes)
 
   CUSTOMER: {
-    PATIENCE_BASE: 33000,        // ms at the easy start (more steps now: cook, wash, mix kopi)
-    PATIENCE_MIN: 21000,         // ms once fully ramped
-    SPAWN_INTERVAL_START: 4600,  // ms between arrivals at the start
-    SPAWN_INTERVAL_MIN: 2900,    // ms between arrivals once ramped
+    PATIENCE_BASE: 38000,        // ms at the easy start (more steps now: cook, wash, mix kopi)
+    PATIENCE_MIN: 25000,         // ms once fully ramped
+    SPAWN_INTERVAL_START: 5400,  // ms between arrivals at the start
+    SPAWN_INTERVAL_MIN: 3500,    // ms between arrivals once ramped
     FIRST_SPAWN_DELAY: 900       // ms before the very first customer
   },
 
