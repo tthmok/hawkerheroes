@@ -40,6 +40,17 @@ const { pathToFileURL } = require('url');
       playing: window.HC.Music.playing, step: window.HC.Music._step,
       gain: !!window.HC.Music._gain, osc: window.__osc
     }));
+
+    // intensity ramps up (tempo + brightness) then eases back to relaxed
+    await page.evaluate(() => window.HC.Music.setIntensity(1));
+    await new Promise(r => setTimeout(r, 1600));
+    out.intenseUp = await page.evaluate(() => ({
+      i: +window.HC.Music._intensity.toFixed(2), cut: Math.round(window.HC.Music._filter.frequency.value)
+    }));
+    await page.evaluate(() => window.HC.Music.setIntensity(0));
+    await new Promise(r => setTimeout(r, 2400));
+    out.intenseDown = await page.evaluate(() => +window.HC.Music._intensity.toFixed(2));
+
     await page.evaluate(() => window.HC.Music.stop());
     await new Promise(r => setTimeout(r, 100));
     out.stoppedPlaying = await page.evaluate(() => window.HC.Music.playing);
@@ -51,6 +62,20 @@ const { pathToFileURL } = require('url');
     await new Promise(r => setTimeout(r, 300));
     out.musicInGame = await page.evaluate(() => window.HC.Music.playing);
     out.oscInGame = await page.evaluate(() => window.__osc);
+
+    // a paper-deadline student makes the game raise the music intensity target
+    await page.evaluate(() => {
+      const g = window.HC.game.scene.getScene('Game'), HC = window.HC;
+      g.nextSpawnAt = g.time.now + 9e8;
+      const t = g.tables.find(tt => !tt.customer) || g.tables[0];
+      if (t.customer) { t.customer.leave(true); t.customer = null; }
+      t.patience = 30000;
+      const c = new HC.Customer(g, t, { name: 'DL', color: 0xffffff, index: 0 }, ['chickenrice'], { deadline: { name: 'CHI', waves: 2 } });
+      t.customer = c; c._activate();
+    });
+    await new Promise(r => setTimeout(r, 200));
+    out.deadlineRaisesIntensity = await page.evaluate(() => window.HC.Music._intTarget);
+
     // force the round to end -> GameOver -> shutdown should stop the music
     await page.evaluate(() => { window.HC.game.scene.getScene('Game').state.timeLeft = 1; });
     await page.waitForFunction(() => { const s = window.HC.game.scene.getScene('GameOver'); return s && s.scene.isActive(); }, { timeout: 8000 });
@@ -60,7 +85,9 @@ const { pathToFileURL } = require('url');
     out.errors = errors;
     const pass = out.hasMusic && out.engine.playing && out.engine.step > 0 && out.engine.gain &&
       out.engine.osc > 0 && out.stoppedPlaying === false &&
-      out.musicInGame === true && out.oscInGame > 0 && out.musicStoppedOnExit && errors.length === 0;
+      out.intenseUp.i > 0.6 && out.intenseUp.cut > 3800 && out.intenseDown < 0.15 &&
+      out.musicInGame === true && out.oscInGame > 0 && out.deadlineRaisesIntensity === 1 &&
+      out.musicStoppedOnExit && errors.length === 0;
     console.log(JSON.stringify(out, null, 2));
     console.log(pass ? '\n>>> MUSIC TEST PASSED' : '\n>>> MUSIC TEST FAILED');
     process.exitCode = pass ? 0 : 1;

@@ -32,11 +32,16 @@
     var root = N[bar.bass[0]], fifth = N[bar.bass[1]];
     BASS[base + 0] = root; BASS[base + 4] = fifth; BASS[base + 8] = root; BASS[base + 12] = fifth;
   });
+  var ROOT = BARS.map(function (bar) { return N[bar.bass[0]]; });   // per-bar root
 
   HC.Music = {
-    bpm: 104,
+    baseBpm: 104,         // relaxed tempo (normal)
+    intenseBpm: 148,      // tempo when a paper deadline is active
+    baseCut: 2400,        // low-pass cutoff: mellow when normal...
+    intenseCut: 5200,     // ...brighter / more urgent when intense
     level: 0.30,          // overall music level (under the SFX; tweak for taste)
     playing: false,
+    _intensity: 0, _intTarget: 0,
     _gain: null, _filter: null, _timer: null, _next: 0, _step: 0,
 
     start: function () {
@@ -54,6 +59,8 @@
       }
       this.playing = true;
       this._step = 0;
+      this._intensity = 0; this._intTarget = 0;    // start relaxed
+      if (this._filter) this._filter.frequency.value = this.baseCut;
       this._next = A.ctx.currentTime + 0.08;
       var g = this._gain.gain, t = A.ctx.currentTime;
       g.cancelScheduledValues(t); g.setValueAtTime(0.0001, t);
@@ -74,15 +81,28 @@
       }
     },
 
+    // 0 = relaxed, 1 = intense (a paper deadline is active); ramps in smoothly.
+    setIntensity: function (t) { this._intTarget = t > 1 ? 1 : (t < 0 ? 0 : t); },
+
     // look-ahead scheduler (schedules notes a little ahead of the audio clock)
     _scheduler: function () {
       var A = window.HC.Audio;
       if (!A || !A.ctx) return;
-      var sp16 = (60 / this.bpm) / 4;            // seconds per 16th note
+      // ease intensity toward its target (~2s), and map it to tempo + brightness
+      this._intensity += (this._intTarget - this._intensity) * 0.04;
+      if (Math.abs(this._intTarget - this._intensity) < 0.002) this._intensity = this._intTarget;
+      var inten = this._intensity;
+      if (this._filter) this._filter.frequency.value = this.baseCut + inten * (this.intenseCut - this.baseCut);
+      var bpm = this.baseBpm + inten * (this.intenseBpm - this.baseBpm);
+      var sp16 = (60 / bpm) / 4;                 // seconds per 16th note
       while (this._next < A.ctx.currentTime + 0.12) {
         var s = this._step;
         if (LEAD[s]) this._note(LEAD[s], this._next, sp16 * 2 * 0.95, 'square', 0.40);
         if (BASS[s]) this._note(BASS[s], this._next, sp16 * 4 * 0.95, 'triangle', 0.55);
+        // a driving off-beat pulse that swells in with intensity
+        if (inten > 0.03 && (s % 4) === 2) {
+          this._note(ROOT[(s / 16) | 0] * 2, this._next, sp16 * 0.9, 'square', 0.30 * inten);
+        }
         this._next += sp16;
         this._step = (this._step + 1) % STEPS;
       }

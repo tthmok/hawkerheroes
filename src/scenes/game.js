@@ -386,6 +386,17 @@ HC.GameScene.prototype.update = function (time, delta) {
     window.HC.Touch.setDashCooldown((this.players[0].dashCDUntil - time) / HC.Config.DASH_COOLDOWN);
   }
 
+  // music turns intense while any paper-deadline student is here, easing back
+  // to normal once they're all served / gone.
+  if (window.HC.Music) {
+    var dlActive = 0;
+    for (var di = 0; di < this.tables.length; di++) {
+      var dc = this.tables[di].customer;
+      if (dc && dc.deadline && dc.state !== 'leaving') dlActive++;
+    }
+    window.HC.Music.setIntensity(dlActive > 0 ? 1 : 0);
+  }
+
   // host: broadcast a state snapshot to the guest (~20 Hz)
   if (this.online === 'host' && window.HC.Net && window.HC.Net.sendState) {
     this._netAccum = (this._netAccum || 0) + dt;
@@ -776,6 +787,13 @@ HC.GameScene.prototype._renderNet = function (dt) {
   this.state.streak = snap.s.sk; this.state.timeLeft = snap.s.tl;
   this._drawSink();
   this.hud.update(this.state, this.netPlayers, this.kitchen);
+
+  // match the host's intensity: any deadline student in the snapshot -> intense
+  if (window.HC.Music) {
+    var gdl = 0;
+    for (var gi = 0; gi < snap.cu.length; gi++) if (snap.cu[gi].dl && snap.cu[gi].st !== 'leaving') gdl++;
+    window.HC.Music.setIntensity(gdl > 0 ? 1 : 0);
+  }
 
   if (snap.go && !this._shownGO) { this._shownGO = true; this._guestGameOver(snap.go); }
 };
