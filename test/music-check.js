@@ -63,18 +63,22 @@ const { pathToFileURL } = require('url');
     out.musicInGame = await page.evaluate(() => window.HC.Music.playing);
     out.oscInGame = await page.evaluate(() => window.__osc);
 
-    // a paper-deadline student makes the game raise the music intensity target
+    // a paper-deadline student WALKING IN must not raise intensity yet...
     await page.evaluate(() => {
       const g = window.HC.game.scene.getScene('Game'), HC = window.HC;
       g.nextSpawnAt = g.time.now + 9e8;
       const t = g.tables.find(tt => !tt.customer) || g.tables[0];
       if (t.customer) { t.customer.leave(true); t.customer = null; }
       t.patience = 30000;
-      const c = new HC.Customer(g, t, { name: 'DL', color: 0xffffff, index: 0 }, ['chickenrice'], { deadline: { name: 'CHI', waves: 2 } });
-      t.customer = c; c._activate();
+      window.__dl = new HC.Customer(g, t, { name: 'DL', color: 0xffffff, index: 0 }, ['chickenrice'], { deadline: { name: 'CHI', waves: 2 } });
+      t.customer = window.__dl;   // state 'arriving'
     });
     await new Promise(r => setTimeout(r, 200));
-    out.deadlineRaisesIntensity = await page.evaluate(() => window.HC.Music._intTarget);
+    out.arrivingDeadlineIntensity = await page.evaluate(() => window.HC.Music._intTarget);   // expect 0
+    // ...but once SEATED it does
+    await page.evaluate(() => window.__dl._activate());
+    await new Promise(r => setTimeout(r, 200));
+    out.seatedDeadlineIntensity = await page.evaluate(() => window.HC.Music._intTarget);      // expect 1
 
     // force the round to end -> GameOver -> shutdown should stop the music
     await page.evaluate(() => { window.HC.game.scene.getScene('Game').state.timeLeft = 1; });
@@ -86,7 +90,8 @@ const { pathToFileURL } = require('url');
     const pass = out.hasMusic && out.engine.playing && out.engine.step > 0 && out.engine.gain &&
       out.engine.osc > 0 && out.stoppedPlaying === false &&
       out.intenseUp.i > 0.6 && out.intenseUp.cut > 3800 && out.intenseDown < 0.15 &&
-      out.musicInGame === true && out.oscInGame > 0 && out.deadlineRaisesIntensity === 1 &&
+      out.musicInGame === true && out.oscInGame > 0 &&
+      out.arrivingDeadlineIntensity === 0 && out.seatedDeadlineIntensity === 1 &&
       out.musicStoppedOnExit && errors.length === 0;
     console.log(JSON.stringify(out, null, 2));
     console.log(pass ? '\n>>> MUSIC TEST PASSED' : '\n>>> MUSIC TEST FAILED');

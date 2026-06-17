@@ -389,13 +389,14 @@ HC.GameScene.prototype.update = function (time, delta) {
     window.HC.Touch.setDashCooldown((this.players[0].dashCDUntil - time) / HC.Config.DASH_COOLDOWN);
   }
 
-  // music turns intense while any paper-deadline student is here, easing back
-  // to normal once they're all served / gone.
+  // music turns intense while a paper-deadline student is SEATED (active or
+  // resting between waves) - not while they're still walking in - and eases
+  // back to normal once they're all served / gone.
   if (window.HC.Music) {
     var dlActive = 0;
     for (var di = 0; di < this.tables.length; di++) {
       var dc = this.tables[di].customer;
-      if (dc && dc.deadline && dc.state !== 'leaving') dlActive++;
+      if (dc && dc.deadline && (dc.state === 'active' || dc.state === 'resting')) dlActive++;
     }
     window.HC.Music.setIntensity(dlActive > 0 ? 1 : 0);
   }
@@ -798,10 +799,13 @@ HC.GameScene.prototype._renderNet = function (dt) {
   this._drawSink();
   this.hud.update(this.state, this.netPlayers, this.kitchen);
 
-  // match the host's intensity: any deadline student in the snapshot -> intense
+  // match the host: intense while a deadline student is SEATED (active/resting)
   if (window.HC.Music) {
     var gdl = 0;
-    for (var gi = 0; gi < snap.cu.length; gi++) if (snap.cu[gi].dl && snap.cu[gi].st !== 'leaving') gdl++;
+    for (var gi = 0; gi < snap.cu.length; gi++) {
+      var gc = snap.cu[gi];
+      if (gc.dl && (gc.st === 'active' || gc.st === 'resting')) gdl++;
+    }
     window.HC.Music.setIntensity(gdl > 0 ? 1 : 0);
   }
 
