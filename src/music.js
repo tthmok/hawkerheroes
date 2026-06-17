@@ -39,7 +39,7 @@
     intenseBpm: 148,      // tempo when a paper deadline is active
     baseCut: 2400,        // low-pass cutoff: mellow when normal...
     intenseCut: 5200,     // ...brighter / more urgent when intense
-    level: 0.30,          // overall music level (under the SFX; tweak for taste)
+    level: 0.35,          // overall music level (+17%; still under the SFX)
     playing: false,
     _intensity: 0, _intTarget: 0,
     _gain: null, _filter: null, _timer: null, _next: 0, _step: 0,

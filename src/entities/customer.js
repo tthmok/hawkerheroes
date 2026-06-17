@@ -284,7 +284,9 @@ HC.Customer.prototype.leave = function (happy, onGone) {
   });
 
   var ent = this.scene.entrance || { x: this.seatX, y: HC.Config.PLAY.y2 + 16 };
-  var dur = Phaser.Math.Clamp(Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, ent.x, ent.y) / 0.5, 350, 850);
+  // walk out at the regular pace (~320 px/s) - they amble IN slowly, but once
+  // served / done they leave at a normal speed.
+  var dur = Phaser.Math.Clamp(Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, ent.x, ent.y) / 0.32, 600, 1100);
   this._walkTo(ent.x, ent.y, dur, function () { self.destroy(); if (onGone) onGone(); });
 };
 

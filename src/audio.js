@@ -12,6 +12,7 @@ HC.Audio = {
   master: null,
   muted: false,
   ok: true,
+  sfxLevel: 0.83,       // global SFX gain multiplier (-17% vs music)
   buffers: null,        // key -> AudioBuffer (filled in as they decode)
   _sfxStarted: false,
 
@@ -66,7 +67,7 @@ HC.Audio = {
       src.buffer = buf;
       if (rate) src.playbackRate.value = rate;
       var g = this.ctx.createGain();
-      g.gain.value = (vol == null ? 1 : vol);
+      g.gain.value = (vol == null ? 1 : vol) * this.sfxLevel;
       src.connect(g); g.connect(this.master);
       src.start();
       return true;
@@ -83,7 +84,7 @@ HC.Audio = {
     osc.frequency.setValueAtTime(freq, t);
     if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(vol || 0.25, t + 0.01);
+    g.gain.exponentialRampToValueAtTime((vol || 0.25) * this.sfxLevel, t + 0.01);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     osc.connect(g);
     g.connect(this.master);
