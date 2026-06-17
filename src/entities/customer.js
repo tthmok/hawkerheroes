@@ -151,7 +151,7 @@ HC.Customer.prototype._buildOrder = function (order) {
 
 HC.Customer.prototype._updateBadge = function () {
   if (!this.badge) return;
-  this.badge.setText('Help me for the ' + this.deadline + ' deadline!');
+  this.badge.setText(this.deadline + ' deadline! MORE FOOD!');
   this.badge.setPosition(this.bx, this.by - this.bh / 2 - 14);
 };
 
