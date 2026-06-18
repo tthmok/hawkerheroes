@@ -33,22 +33,51 @@ HC.Textures = {
   // ---------------------------------------------------------------
   _kopi: function (scene) {
     var self = this;
-    function cup(key, coffee, milk, label) {
+    // Each finished kopi carries THREE redundant cues so it stays readable when
+    // the icon is scaled down to ~28px in a thought bubble:
+    //   coffee = liquid colour (near-black / caramel / pale cream),
+    //   milk   = surface treatment ('none' | 'swirl' | 'cream'),
+    //   band   = a colour-coded label stripe across the white cup (or null),
+    //   label  = a bold 'O' / 'C' mark drawn on the band.
+    function cup(key, opt) {
       var S = 46, c = S / 2, g = self.gfx(scene);
+      var coffee = opt.coffee, milk = opt.milk || 'none', band = opt.band || null, label = opt.label || null;
+      // saucer
       g.fillStyle(0x000000, 0.12); g.fillEllipse(c, c + 12, 30, 8);
-      g.fillStyle(0xf4efe6, 1); g.fillEllipse(c, c + 10, 31, 9);          // saucer
+      g.fillStyle(0xf4efe6, 1); g.fillEllipse(c, c + 10, 31, 9);
       g.fillStyle(0xe6dccc, 1); g.fillEllipse(c, c + 10, 22, 5);
-      g.lineStyle(2.4, 0xfbfaf4, 1); g.strokeCircle(c + 13, c - 1, 5.4);  // handle
+      // handle
+      g.lineStyle(2.4, 0xfbfaf4, 1); g.strokeCircle(c + 13, c - 1, 5.4);
       g.lineStyle(2, 0x3a2a1a, 1); g.strokeCircle(c + 13, c - 1, 6.6);
+      // white cup body
       g.fillStyle(0xfbfaf4, 1); g.fillRoundedRect(c - 12, c - 10, 24, 21, 4);
+      // colour-coded label band across the body (largest small-scale cue).
+      // Sits in the straight-edge zone (y 21..30) so square corners don't poke
+      // past the cup's rounded bottom corners (which begin at y 30).
+      if (band) {
+        g.fillStyle(band, 1); g.fillRect(c - 12, c - 2, 24, 9);
+        g.fillStyle(self.shade(band, 1.18), 0.9); g.fillRect(c - 12, c - 2, 24, 2); // top sheen
+        g.fillStyle(self.shade(band, 0.78), 1); g.fillRect(c - 12, c + 5, 24, 2);   // shadow lip
+      }
       g.lineStyle(2, 0x3a2a1a, 1); g.strokeRoundedRect(c - 12, c - 10, 24, 21, 4);
-      g.fillStyle(coffee, 1); g.fillEllipse(c, c - 7, 19, 6);             // coffee surface
-      if (milk) { g.fillStyle(0xe9d3a8, 0.92); g.fillEllipse(c + 2, c - 7, 9, 3); }
-      g.fillStyle(0xffffff, 0.35); g.fillEllipse(c - 4, c - 8, 7, 2);
-      if (label === 'O') { g.lineStyle(2.6, 0x3a2a1a, 1); g.strokeCircle(c - 1, c + 3, 4); }
-      else if (label === 'C') {
-        g.lineStyle(2.6, 0x3a2a1a, 1);
-        g.beginPath(); g.arc(c - 1, c + 3, 4, Math.PI * 0.28, Math.PI * 1.72); g.strokePath();
+      // coffee surface
+      g.fillStyle(self.shade(coffee, 0.82), 1); g.fillEllipse(c, c - 6, 19, 7);  // inner shadow
+      g.fillStyle(coffee, 1); g.fillEllipse(c, c - 7, 19, 6);
+      if (milk === 'swirl') {                                          // condensed-milk swirl (kept in-bounds)
+        g.fillStyle(0xddb478, 0.92); g.fillEllipse(c + 2, c - 6.5, 11, 4.4);
+        g.lineStyle(1.6, 0x9c6a38, 0.85);
+        g.beginPath(); g.arc(c - 1, c - 7, 3.1, Math.PI * 0.15, Math.PI * 1.4); g.strokePath();
+      } else if (milk === 'cream') {                                   // evap-milk latte ring
+        g.fillStyle(0xf3e4c8, 1); g.fillEllipse(c, c - 7, 18, 5.4);
+        g.fillStyle(self.shade(coffee, 0.9), 1); g.fillEllipse(c, c - 7, 8.5, 2.8);
+      }
+      g.fillStyle(0xffffff, 0.4); g.fillEllipse(c - 4, c - 8, 7, 2);   // gloss
+      // bold label on the band
+      if (label === 'O') {
+        g.lineStyle(2.8, 0xffffff, 1); g.strokeCircle(c, c + 2.5, 4.2);
+      } else if (label === 'C') {
+        g.lineStyle(2.8, 0xffffff, 1);
+        g.beginPath(); g.arc(c, c + 2.5, 4.2, Math.PI * 0.32, Math.PI * 1.68); g.strokePath();
       }
       // steam
       g.lineStyle(2, 0xffffff, 0.5);
@@ -56,10 +85,10 @@ HC.Textures = {
       g.beginPath(); g.arc(c + 3, c - 16, 2.4, Math.PI, Math.PI * 2.1); g.strokePath();
       g.generateTexture(key, S, S); g.destroy();
     }
-    cup('cup_plain', 0x49301a, false, null);
-    cup('kopi_o', 0x422c16, false, 'O');
-    cup('kopi', 0x8a6038, true, null);
-    cup('kopi_c', 0x9c7a52, true, 'C');
+    cup('cup_plain', { coffee: 0x49301a, milk: 'none', band: null });                       // in-progress
+    cup('kopi_o', { coffee: 0x281708, milk: 'none', band: 0x3f9a52, label: 'O' });          // black + sugar (green)
+    cup('kopi', { coffee: 0x7a4f2a, milk: 'swirl', band: 0xc25438, label: null });          // condensed milk (red)
+    cup('kopi_c', { coffee: 0xbf9c6e, milk: 'cream', band: 0x4a86b8, label: 'C' });         // evap milk + sugar (blue)
 
     // ---- ingredient stations (counter + an icon) ----
     function counter(g, W, H) {
